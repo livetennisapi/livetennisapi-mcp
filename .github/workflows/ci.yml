@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['18', '20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run build
+
+      - name: Exactly one shebang
+        # A duplicated shebang is a hard syntax error and this package is run
+        # directly via `npx`, so it would break every user. Guard it in CI.
+        run: |
+          count=$(grep -c '^#!' dist/index.js)
+          echo "shebang lines: $count"
+          [ "$count" = "1" ]
+
+      - name: Speaks the MCP protocol
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+          | timeout 30 node dist/index.js 2>/dev/null > out.jsonl
+          node -e "
+            const lines = require('fs').readFileSync('out.jsonl','utf8').trim().split('\n').map(JSON.parse);
+            const tools = lines.find(m => m.id === 2)?.result?.tools ?? [];
+            if (tools.length < 12) { console.error('expected 12 tools, got', tools.length); process.exit(1); }
+            console.log('MCP handshake OK —', tools.length, 'tools');
+          "

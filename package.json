@@ -1,0 +1,63 @@
+{
+  "name": "livetennisapi-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for the Live Tennis API \u2014 give Claude, Cursor and other LLM agents real-time tennis scores, players, odds and model win-probability.",
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "model-context-protocol",
+    "mcp-server",
+    "claude",
+    "llm",
+    "ai-agent",
+    "tennis",
+    "tennis-api",
+    "live-scores",
+    "sports",
+    "sports-api",
+    "sports-data",
+    "atp",
+    "wta"
+  ],
+  "homepage": "https://livetennisapi.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/livetennisapi/livetennisapi-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/livetennisapi/livetennisapi-mcp/issues"
+  },
+  "license": "MIT",
+  "author": "Live Tennis API",
+  "type": "module",
+  "bin": {
+    "livetennisapi-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "livetennisapi": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
