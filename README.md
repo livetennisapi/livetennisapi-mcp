@@ -111,6 +111,20 @@ LIVETENNISAPI_KEY=twjp_… node dist/index.js   # speaks MCP over stdio
 Built on the official [`livetennisapi`](https://www.npmjs.com/package/livetennisapi)
 client.
 
+## Related
+
+Everything in the Live Tennis API developer surface:
+
+| | Install | Source | Package |
+|---|---|---|---|
+| Python client | `pip install livetennisapi` | [repo](https://github.com/livetennisapi/livetennisapi-python) | [package](https://pypi.org/project/livetennisapi/) |
+| JavaScript / TypeScript client | `npm install livetennisapi` | [repo](https://github.com/livetennisapi/livetennisapi-js) | [package](https://www.npmjs.com/package/livetennisapi) |
+| MCP server for LLM agents **(this repo)** | `npx livetennisapi-mcp` | — | [package](https://www.npmjs.com/package/livetennisapi-mcp) |
+
+- **API reference** — <https://docs.livetennisapi.com> ([plain-HTML version](https://docs.livetennisapi.com/reference.html), no JavaScript required)
+- **OpenAPI 3.1 specification** — [livetennisapi/openapi](https://github.com/livetennisapi/openapi)
+- **Website and plans** — <https://livetennisapi.com>
+
 ## Licence
 
 MIT — see [LICENSE](LICENSE). Use of the API service is governed by the
