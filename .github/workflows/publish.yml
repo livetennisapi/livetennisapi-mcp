@@ -55,3 +55,14 @@ jobs:
       - run: npm install -g npm@latest
 
       - run: npm publish --provenance --access public
+
+      # Also list the server in the official MCP Registry so clients can
+      # discover it. Authenticated with the same GitHub OIDC token — no
+      # credential is stored. Ownership is proven by the `mcpName` field in the
+      # published package.json matching the `name` in server.json.
+      - name: Publish to the MCP Registry
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/').tar.gz" \
+            | tar xz mcp-publisher
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

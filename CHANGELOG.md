@@ -3,6 +3,26 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] — 2026-07-19
+
+### Added
+- Listed in the [official MCP Registry](https://registry.modelcontextprotocol.io)
+  as `io.github.livetennisapi/livetennisapi-mcp`, so MCP clients can discover the
+  server programmatically. Adds `server.json` and the `mcpName` ownership marker,
+  published from CI via GitHub OIDC.
+
+### Fixed
+- `check_api_status` reported a PRO or ULTRA key as BASIC whenever the events
+  probe hit a match with no recorded events: `NotFound` was treated as "not
+  entitled" when it actually proves the call was allowed. Only `UpgradeRequired`
+  now stops the tier ladder.
+- Guarded against a non-JSON response body decoding to `undefined` and being
+  dereferenced in `get_match`, `get_match_score`, `get_match_odds`,
+  `get_match_analysis` and `get_player`.
+
+### Changed
+- `CHANGELOG.md` is now included in the published tarball.
+
 ## [1.0.1] — 2026-07-19
 
 ### Changed

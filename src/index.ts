@@ -28,7 +28,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 
 const apiKey = (process.env.LIVETENNISAPI_KEY ?? '').trim();
 const client = new LiveTennisAPI({
@@ -141,6 +141,7 @@ server.tool(
   ({ match_id }) =>
     guard(async () => {
       const match = await client.getMatch(match_id);
+      if (!match) return 'No data returned for that match id.';
       let out = summarise(match);
       if (match.market) {
         out += `\n\nMarket: ${match.market.question ?? '-'}`;
@@ -168,6 +169,7 @@ server.tool(
   ({ match_id }) =>
     guard(async () => {
       const score = await client.getMatchScore(match_id);
+      if (!score) return 'No score available for that match yet.';
       const parts = [`Score: ${formatScore(score)}`];
       if (score.sets) parts.push(`Sets: ${score.sets.join('-')}`);
       if (score.server) parts.push(`Serving: player ${score.server}`);
@@ -208,6 +210,7 @@ server.tool(
   ({ player_id }) =>
     guard(async () => {
       const p = await client.getPlayer(player_id);
+      if (!p) return 'No data returned for that player id.';
       const rows = [
         `${p.name ?? 'Unknown'} [${p.id}]`,
         p.country ? `Country: ${p.country}` : null,
@@ -276,6 +279,7 @@ server.tool(
   ({ match_id, limit }) =>
     guard(async () => {
       const market = await client.getMarketPrices(match_id, { limit });
+      if (!market) return 'No market data for that match.';
       const lines = [`Market: ${market.question ?? '-'}`];
       if (market.status) lines.push(`Status: ${market.status}`);
       if (market.volume != null) lines.push(`24h volume: ${market.volume}`);
@@ -301,7 +305,7 @@ server.tool(
   ({ match_id }) =>
     guard(async () => {
       const analysis = await client.getMatchAnalysis(match_id);
-      if (!analysis.thesis && !analysis.profile) return 'No model analysis exists for this match yet.';
+      if (!analysis || (!analysis.thesis && !analysis.profile)) return 'No model analysis exists for this match yet.';
       const lines: string[] = [];
       if (analysis.profile) {
         const p = analysis.profile;
@@ -355,14 +359,24 @@ server.tool(
       const probe = await client.listCompletedMatches({ limit: 1 });
       const id = probe.data[0]?.id;
       if (id != null) {
+        // Climb the ladder. Only UpgradeRequired proves a tier is NOT held --
+        // NotFound means the call was allowed but that match has no data, so
+        // it is evidence of entitlement, not of a missing plan.
         try {
           await client.listMatchEvents(id, { limit: 1 });
           tier = 'PRO';
-          await client.getMatchAnalysis(id);
-          tier = 'ULTRA';
         } catch (err) {
-          if (!(err instanceof UpgradeRequired) && !(err instanceof NotFound)) throw err;
-          if (err instanceof NotFound && tier === 'PRO') tier = 'ULTRA'; // entitled, just no analysis
+          if (err instanceof NotFound) tier = 'PRO';
+          else if (!(err instanceof UpgradeRequired)) throw err;
+        }
+        if (tier === 'PRO') {
+          try {
+            await client.getMatchAnalysis(id);
+            tier = 'ULTRA';
+          } catch (err) {
+            if (err instanceof NotFound) tier = 'ULTRA';
+            else if (!(err instanceof UpgradeRequired)) throw err;
+          }
         }
       }
       return text(

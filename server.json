@@ -1,0 +1,27 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.livetennisapi/livetennisapi-mcp",
+  "description": "Real-time tennis data for LLM agents: live scores, players, rankings, match-winner odds and model win-probability for ATP, WTA, Challenger and ITF.",
+  "repository": {
+    "url": "https://github.com/livetennisapi/livetennisapi-mcp",
+    "source": "github"
+  },
+  "version": "1.0.2",
+  "websiteUrl": "https://livetennisapi.com",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "livetennisapi-mcp",
+      "version": "1.0.2",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "LIVETENNISAPI_KEY",
+          "description": "Your Live Tennis API key (twjp_...). Get one at https://livetennisapi.com/#pricing — the server runs without it but only the status check will work.",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
