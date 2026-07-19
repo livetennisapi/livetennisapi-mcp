@@ -54,7 +54,17 @@ jobs:
       # npm >= 11.5.1 is required for OIDC trusted publishing.
       - run: npm install -g npm@latest
 
-      - run: npm publish --provenance --access public
+      # Skip if this version is already on npm, so a failure in a LATER step
+      # (the registry publish) can be retried by re-running the workflow rather
+      # than forcing a version bump.
+      - name: Publish to npm (skip if already published)
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$(npm view livetennisapi-mcp@$PKG version 2>/dev/null)" = "$PKG" ]; then
+            echo "livetennisapi-mcp@$PKG is already on npm - skipping"
+          else
+            npm publish --provenance --access public
+          fi
 
       # Also list the server in the official MCP Registry so clients can
       # discover it. Authenticated with the same GitHub OIDC token — no
