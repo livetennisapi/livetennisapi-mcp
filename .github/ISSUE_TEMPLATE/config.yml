@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: API documentation
+    url: https://docs.livetennisapi.com
+    about: Endpoint reference, tiers and response shapes.
+  - name: Account, billing or key problems
+    url: https://livetennisapi.com
+    about: Anything about your subscription or API key — not a code issue.
+  - name: Report a security vulnerability
+    url: https://github.com/livetennisapi/.github/security/advisories/new
+    about: Please report privately, never as a public issue.

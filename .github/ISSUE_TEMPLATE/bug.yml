@@ -1,0 +1,51 @@
+name: Bug report
+description: Something behaves differently than documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The most useful bug you can file is a mismatch
+        between what the API actually returns and what this library expects.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: The smallest snippet that shows the problem. Redact your API key.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: response
+    attributes:
+      label: Raw API response (if relevant)
+      description: |
+        For a parsing or shape problem this is the single most valuable thing.
+        Python: `obj.raw`. JavaScript: log the response object.
+      render: json
+  - type: input
+    id: version
+    attributes:
+      label: Library version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime
+      placeholder: "Python 3.12 / Node 22 / Deno 2"
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Plan tier
+      options: [BASIC, PRO, ULTRA, "Not sure"]

@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   build:
+    name: node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -22,52 +23,18 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      # This server depends on the `livetennisapi` client. Until that package is
-      # published to npm the dependency cannot resolve, and a red badge here
-      # would report the wrong thing — the code is fine, the registry just does
-      # not have its dependency yet. Detect that state explicitly and skip; the
-      # moment the client publishes, CI goes green with no edit to this file.
-      - name: Is the client published yet?
-        id: dep
-        run: |
-          if npm view livetennisapi version >/dev/null 2>&1; then
-            echo "published=true" >> "$GITHUB_OUTPUT"
-            echo "livetennisapi $(npm view livetennisapi version) is on npm"
-          else
-            echo "published=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::livetennisapi is not on npm yet - skipping build until it publishes"
-          fi
-
-      - if: steps.dep.outputs.published == 'true'
-        run: npm install
-
-      - if: steps.dep.outputs.published == 'true'
-        run: npm run typecheck
-
-      - if: steps.dep.outputs.published == 'true'
-        run: npm run build
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run build
 
       # A duplicated shebang is a hard syntax error, and this package runs via
-      # `npx`, so it breaks every user. That bug shipped once (a tsup banner on
-      # top of the shebang esbuild already preserves) - hence the guard.
+      # `npx`, so it would break every user. That bug shipped once (a tsup banner
+      # stacked on top of the shebang esbuild already preserves) - hence the guard.
       - name: Exactly one shebang
-        if: steps.dep.outputs.published == 'true'
         run: |
           count=$(grep -c '^#!' dist/index.js)
           echo "shebang lines: $count"
           [ "$count" = "1" ]
 
       - name: Speaks the MCP protocol
-        if: steps.dep.outputs.published == 'true'
-        run: |
-          printf '%s\n' \
-            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
-            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
-            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-          | timeout 30 node dist/index.js 2>/dev/null > out.jsonl
-          node -e "
-            const lines = require('fs').readFileSync('out.jsonl','utf8').trim().split('\n').map(JSON.parse);
-            const tools = lines.find(m => m.id === 2)?.result?.tools ?? [];
-            if (tools.length < 12) { console.error('expected 12 tools, got', tools.length); process.exit(1); }
-            console.log('MCP handshake OK -', tools.length, 'tools');
-          "
+        run: node test/protocol.mjs

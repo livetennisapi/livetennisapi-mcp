@@ -1,0 +1,57 @@
+name: publish
+
+# Publishes to npm when a GitHub Release is published.
+#
+# Uses npm Trusted Publishing (OIDC) — no NPM_TOKEN exists. npm verifies this
+# workflow's identity directly, so there is no publish secret in the repo to
+# leak and nothing to rotate.
+#
+# Configured on npm at Package -> Settings -> Trusted Publisher:
+#   Owner: livetennisapi  Repo: livetennisapi-mcp
+#   Workflow: publish.yml  Environment: npm  Permission: npm publish
+#
+# 1.0.0 predates this and was published manually, so it carries no provenance
+# attestation: npm requires a package to exist before OIDC can be configured.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/livetennisapi-mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run build
+      - run: node test/protocol.mjs
+
+      - name: Assert the tag matches package.json
+        if: github.event_name == 'release'
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::release tag ($TAG) does not match package.json ($PKG)"
+            exit 1
+          fi
+          echo "tag and version agree: $PKG"
+
+      # npm >= 11.5.1 is required for OIDC trusted publishing.
+      - run: npm install -g npm@latest
+
+      - run: npm publish --provenance --access public

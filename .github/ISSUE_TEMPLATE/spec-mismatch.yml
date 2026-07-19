@@ -1,0 +1,29 @@
+name: Spec mismatch
+description: The API returns something the spec or this library does not expect.
+labels: [spec-mismatch]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The spec is the source of truth for our SDKs. If the live API and the
+        spec disagree, that is a real bug worth fixing at the source.
+  - type: input
+    id: endpoint
+    attributes:
+      label: Endpoint
+      placeholder: "GET /matches/{matchId}/score"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the spec says
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What the API actually returned
+      render: json
+    validations:
+      required: true
