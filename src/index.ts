@@ -28,7 +28,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 
 const apiKey = (process.env.LIVETENNISAPI_KEY ?? '').trim();
 const client = new LiveTennisAPI({
