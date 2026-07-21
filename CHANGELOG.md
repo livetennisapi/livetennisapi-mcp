@@ -3,6 +3,24 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.3] — 2026-07-21
+
+### Fixed
+- **`check_api_status` reported a valid FREE key as "Could not reach the API".**
+  The tier probe calls `listCompletedMatches()` — `/history/matches`, which is
+  BASIC-gated — and did not catch `UpgradeRequired`. On a FREE key that 403
+  escaped to the outer handler and was rendered as an unreachable API. The probe
+  also started the ladder at `BASIC`, so a free key could never have been named
+  correctly even had it not thrown. The history probe is now caught and
+  identifies FREE, and the upward climb is skipped for it (a FREE key cannot
+  hold PRO/ULTRA).
+
+### Changed
+- Tier legends in the probe result and the tier-wall explanation list the new
+  FREE tier, and the no-key prompts point at the no-card signup
+  (<https://livetennisapi.com/subscribe/free>) rather than the pricing page.
+- `glama.json` claims maintainership of the Glama listing.
+
 ## [1.0.2] — 2026-07-19
 
 ### Added

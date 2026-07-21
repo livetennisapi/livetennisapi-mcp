@@ -6,7 +6,7 @@
     "url": "https://github.com/livetennisapi/livetennisapi-mcp",
     "source": "github"
   },
-  "version": "1.0.2",
+  "version": "1.0.3",
   "websiteUrl": "https://livetennisapi.com",
   "packages": [
     {
