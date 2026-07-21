@@ -51,7 +51,7 @@ async function guard(run: () => Promise<string>): Promise<ToolResult> {
   if (!apiKey) {
     return text(
       'No API key configured. Set the LIVETENNISAPI_KEY environment variable in your ' +
-        'MCP client config. Get a key at https://livetennisapi.com/#pricing',
+        'MCP client config. Get a free key at https://livetennisapi.com/subscribe/free',
     );
   }
   try {
@@ -62,7 +62,8 @@ async function guard(run: () => Promise<string>): Promise<ToolResult> {
         `This data requires the ${err.requiredTier ?? 'a higher'} plan, and the configured ` +
           `API key is on a lower tier. Nothing is wrong with the key — the endpoint is ` +
           `simply not included in the current plan. Upgrade at https://livetennisapi.com/#pricing\n\n` +
-          `Tiers: BASIC = matches, scores, players, fixtures, history · ` +
+          `Tiers: FREE = live & upcoming matches, scores, players, fixtures · ` +
+          `BASIC = + historical results · ` +
           `PRO = + match events and market prices · ` +
           `ULTRA = + model analysis, win probability and the live WebSocket feed.`,
       );
@@ -343,7 +344,7 @@ server.tool(
         return text(
           `API is reachable (status: ${health.status}, version: ${health.version}).\n` +
             'No API key is configured, so only this check will work. Set LIVETENNISAPI_KEY ' +
-            'in your MCP client config — get a key at https://livetennisapi.com/#pricing',
+            'in your MCP client config — get a free key at https://livetennisapi.com/subscribe/free',
         );
       }
       // Probe upward to discover the tier without asking the user.
@@ -356,9 +357,19 @@ server.tool(
         }
         throw err;
       }
-      const probe = await client.listCompletedMatches({ limit: 1 });
-      const id = probe.data[0]?.id;
-      if (id != null) {
+      // FREE stops short of history, so an UpgradeRequired HERE identifies it —
+      // and MUST be caught. Uncaught it escaped to the outer handler, which
+      // reported a perfectly valid free key as "Could not reach the API".
+      let historyPage: Awaited<ReturnType<typeof client.listCompletedMatches>> | null = null;
+      try {
+        historyPage = await client.listCompletedMatches({ limit: 1 });
+      } catch (err) {
+        if (err instanceof UpgradeRequired) tier = 'FREE';
+        else throw err;
+      }
+      const id = historyPage?.data[0]?.id;
+      // A FREE key cannot hold PRO/ULTRA, so skip the climb entirely.
+      if (tier !== 'FREE' && id != null) {
         // Climb the ladder. Only UpgradeRequired proves a tier is NOT held --
         // NotFound means the call was allowed but that match has no data, so
         // it is evidence of entitlement, not of a missing plan.
@@ -382,7 +393,8 @@ server.tool(
       return text(
         `API is reachable (status: ${health.status}, version: ${health.version}).\n` +
           `The configured key appears to be on the ${tier} plan.\n\n` +
-          'BASIC = matches, scores, players, fixtures, history\n' +
+          'FREE  = live & upcoming matches, scores, players, fixtures\n' +
+          'BASIC = + historical results\n' +
           'PRO   = + match events and market prices\n' +
           'ULTRA = + model analysis, win probability and the live feed',
       );

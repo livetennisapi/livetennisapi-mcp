@@ -12,7 +12,7 @@ and model win-probability — for ATP, WTA, Challenger and ITF.
 [![npm](https://img.shields.io/npm/v/livetennisapi-mcp.svg)](https://www.npmjs.com/package/livetennisapi-mcp)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-[**Documentation**](https://docs.livetennisapi.com) · [**Get an API key**](https://livetennisapi.com/#pricing)
+[**Documentation**](https://docs.livetennisapi.com) · [**Get a free API key**](https://livetennisapi.com/subscribe/free)
 
 </div>
 
@@ -43,7 +43,7 @@ claude mcp add livetennis -e LIVETENNISAPI_KEY=twjp_… -- npx -y livetennisapi-
 **Cursor / Zed / others** — same command, same env var. No install step; `npx`
 fetches it on demand.
 
-Get a key at [livetennisapi.com](https://livetennisapi.com/#pricing).
+Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/subscribe/free), or a paid plan at [pricing](https://livetennisapi.com/#pricing).
 
 ## Try it
 
@@ -56,13 +56,13 @@ Get a key at [livetennisapi.com](https://livetennisapi.com/#pricing).
 
 | Tool | Does | Plan |
 |---|---|:--:|
-| `get_live_matches` | Matches in progress, with live scores | BASIC |
-| `get_upcoming_matches` | Matches starting soon | BASIC |
-| `get_match` | Full detail for one match | BASIC |
-| `get_match_score` | Current score only — fastest read | BASIC |
-| `search_players` | Find players by name | BASIC |
-| `get_player` | Profile, ranking, country, handedness | BASIC |
-| `get_fixtures` | Forward schedule | BASIC |
+| `get_live_matches` | Matches in progress, with live scores | FREE |
+| `get_upcoming_matches` | Matches starting soon | FREE |
+| `get_match` | Full detail for one match | FREE |
+| `get_match_score` | Current score only — fastest read | FREE |
+| `search_players` | Find players by name | FREE |
+| `get_player` | Profile, ranking, country, handedness | FREE |
+| `get_fixtures` | Forward schedule | FREE |
 | `get_recent_results` | Completed matches and winners | BASIC |
 | `get_match_events` | Breaks, games, sets, momentum runs | PRO |
 | `get_match_odds` | Match-winner prices — bid / ask / mid | PRO |

@@ -19,7 +19,7 @@
       "environmentVariables": [
         {
           "name": "LIVETENNISAPI_KEY",
-          "description": "Your Live Tennis API key (twjp_...). Get one at https://livetennisapi.com/#pricing \u2014 the server runs without it but only the status check will work.",
+          "description": "Your Live Tennis API key (twjp_...). Get one free, no card, at https://livetennisapi.com/subscribe/free \u2014 the server runs without it but only the status check will work.",
           "isRequired": false,
           "isSecret": true
         }
