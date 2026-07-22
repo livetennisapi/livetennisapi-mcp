@@ -97,9 +97,15 @@ else
     die "refusing to leave a possibly key-leaking endpoint running"
 fi
 
+# Count the tools array properly. Grepping for '"name"' used to be close enough,
+# but tools now carry output schemas and annotations that contain their own
+# "name" keys, so it over-counted — a verification line that quietly lies is
+# worse than no verification line.
 tools=$(curl -fsS --max-time 10 -X POST "http://127.0.0.1:$PORT/mcp" \
     -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
-    -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' 2>/dev/null | grep -o '"name"' | wc -l)
+    -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' 2>/dev/null \
+    | sed -n 's/^data: //p' \
+    | node -e 'let b="";process.stdin.on("data",d=>b+=d).on("end",()=>{try{console.log(JSON.parse(b).result.tools.length)}catch{console.log("?")}})')
 echo "-> tools listable unauthenticated: $tools"
 
 echo
