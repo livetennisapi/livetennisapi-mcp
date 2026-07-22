@@ -1,7 +1,7 @@
 {
   "name": "livetennisapi-mcp",
   "mcpName": "io.github.livetennisapi/livetennisapi-mcp",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "MCP server for the Live Tennis API \u2014 give Claude, Cursor and other LLM agents real-time tennis scores, players, odds and model win-probability.",
   "keywords": [
     "mcp",
@@ -32,7 +32,8 @@
   "author": "Live Tennis API",
   "type": "module",
   "bin": {
-    "livetennisapi-mcp": "./dist/index.js"
+    "livetennisapi-mcp": "./dist/index.js",
+    "livetennisapi-mcp-http": "./dist/http.js"
   },
   "files": [
     "dist",
@@ -48,14 +49,22 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "build:mcpb": "tsup --config tsup.mcpb.config.ts",
-    "pack:mcpb": "npm run build:mcpb && mcpb pack . livetennisapi-mcp.mcpb"
+    "pack:mcpb": "npm run build:mcpb && mcpb pack . livetennisapi-mcp.mcpb",
+    "start:http": "node dist/http.js",
+    "test": "node test/protocol.mjs && node test/http-isolation.mjs && node test/http-ratelimit.mjs",
+    "test:isolation": "node test/http-isolation.mjs",
+    "test:ratelimit": "node test/http-ratelimit.mjs",
+    "test:mutation": "python3 test/mutate.py"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.0",
     "livetennisapi": "^1.0.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.5.0"

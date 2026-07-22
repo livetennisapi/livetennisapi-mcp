@@ -1,0 +1,100 @@
+[Unit]
+# Streamable-HTTP MCP endpoint for the Live Tennis API.
+#
+# Exists so directories (Smithery, Glama, and anything else that introspects
+# over HTTP) can reach a live server. A stdio bundle is opaque to them and lists
+# with no capabilities.
+#
+# Reached ONLY through the existing Cloudflare tunnel:
+#     mcp.livetennisapi.com  ->  http://localhost:8081
+# The tunnel dials OUT to Cloudflare's edge, so this opens no inbound firewall
+# hole and the port stays bound to loopback. Do not add an ufw allow rule for
+# 8081, and do not put this hostname behind Cloudflare Access — indexers are
+# anonymous by definition and Access would make the endpoint unlistable, which
+# is the entire reason this service exists.
+Description=Live Tennis API — MCP Streamable-HTTP endpoint
+Documentation=https://github.com/livetennisapi/livetennisapi-mcp
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/livetennisapi-mcp-http
+
+# Bind to loopback only. The tunnel is the sole ingress path; binding 0.0.0.0
+# would expose the endpoint directly on the public IP, bypassing Cloudflare's
+# DDoS protection and the rate limiting assumptions that go with it.
+Environment=HOST=127.0.0.1
+Environment=PORT=8081
+
+# Requests per minute per caller. Anonymous callers are indexers doing
+# initialize + tools/list; authenticated callers are metered upstream per key
+# and tier anyway, so this only stops one client saturating the process.
+Environment=MCP_RATE_LIMIT_ANON=60
+Environment=MCP_RATE_LIMIT_KEYED=300
+
+# DEFENCE IN DEPTH, and the most important line in this file.
+#
+# This server is multi-tenant: it serves each caller on the key THEY present.
+# src/http.ts deliberately has no fallback to the environment, because falling
+# back would serve every anonymous caller on the operator's key — silently
+# giving away paid data at our tier, forever, with nothing in the logs to show
+# it. Clearing the variable here means that even if such a fallback were ever
+# reintroduced upstream, there would be nothing for it to find.
+Environment=LIVETENNISAPI_KEY=
+
+# Stateless: no database, no files, no credentials, nothing to persist. So it
+# gets an ephemeral user with no home and no shell, created at start and
+# destroyed at stop. Nothing on this box is owned by this service.
+DynamicUser=yes
+
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=livetennisapi-mcp
+
+# The transport is stateless and holds no in-flight work worth draining, so a
+# clean SIGTERM is enough; the process closes its listener and exits.
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# --- Hardening ------------------------------------------------------------
+# This is an anonymous, internet-reachable endpoint that parses attacker-
+# supplied JSON, so it is assumed hostile. It needs to do exactly two things:
+# read its own code, and make outbound HTTPS calls to api.livetennisapi.com.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+# Left OFF deliberately: V8 JIT-compiles to writable-then-executable pages, so
+# enabling this does not harden node, it stops it booting.
+MemoryDenyWriteExecute=false
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @obsolete
+
+# A request builds a whole MCP server object, so a flood costs memory. The
+# rate limiter is the first line of defence; this is the backstop that keeps a
+# runaway from taking the trading app down with it — the two share this host.
+MemoryHigh=192M
+MemoryMax=256M
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

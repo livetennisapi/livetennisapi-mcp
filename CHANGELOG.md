@@ -3,6 +3,44 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] — 2026-07-22
+
+### Added
+- **A Streamable-HTTP transport** (`dist/http.js`, bin
+  `livetennisapi-mcp-http`), so the server can be reached over HTTP by clients
+  and directories that cannot run a local stdio process. Directories that
+  introspect over HTTP could previously only see an opaque bundle, and listed
+  the server with no capabilities.
+
+  It is **multi-tenant**, which is the whole design constraint. The stdio server
+  reads one key from the environment into one long-lived client; hosting that
+  binary as-is would serve every anonymous caller on the operator's key, at the
+  operator's tier, silently and permanently. So each request builds its own
+  server bound to the key that request presented, the transport runs stateless
+  so no session map can hand one caller another's server, and there is
+  deliberately **no fallback** to `LIVETENNISAPI_KEY`. The systemd unit clears
+  that variable outright as defence in depth.
+
+- **Per-caller rate limiting** — 60 req/min anonymous, 300 keyed, both tunable
+  via `MCP_RATE_LIMIT_ANON` / `MCP_RATE_LIMIT_KEYED`. Keyed on the caller's API
+  key rather than IP, because the endpoint sits behind a Cloudflare tunnel where
+  every request arrives from `127.0.0.1` — an IP-keyed limiter would put every
+  user in one bucket and let the first busy client lock out the rest.
+
+- **Deployment**: a hardened systemd unit (`DynamicUser`, syscall filtering,
+  loopback-only bind, memory caps) plus an install script that verifies the
+  running service is loopback-bound and does not leak a key before it exits.
+
+- **Mutation testing** (`npm run test:mutation`) covering both transport tests.
+  Added because the first rate-limit test passed against a limiter that bucketed
+  globally: inferring isolation from status codes cannot work, since the limit
+  is chosen per request while the counter may be shared. The test now reads the
+  `RateLimit` header and asserts a fresh caller starts with a full budget.
+
+### Changed
+- `src/server.ts` now holds the tool definitions, shared by both transports, so
+  stdio and HTTP cannot drift apart.
+
 ## [1.0.4] — 2026-07-22
 
 ### Fixed
