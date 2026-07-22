@@ -38,3 +38,33 @@ jobs:
 
       - name: Speaks the MCP protocol
         run: node test/protocol.mjs
+
+      # The HTTP transport is MULTI-TENANT: it serves whoever calls it, on their
+      # own key. The single worst bug it could have is falling back to the
+      # operator's key from the environment, which would hand every anonymous
+      # caller our paid data silently and permanently. This test spawns the
+      # server against a stub upstream and inspects the credential that actually
+      # left the process, so it cannot be fooled by an error message.
+      - name: Callers cannot borrow each other's keys
+        run: node test/http-isolation.mjs
+
+      # Keyed per caller, not per IP. Everything reaches this process from
+      # 127.0.0.1 via the Cloudflare tunnel, so an IP-keyed limiter would put
+      # every user in ONE bucket and let the first busy client lock out the rest.
+      - name: Rate limiting is armed and per-caller
+        run: node test/http-ratelimit.mjs
+
+  # A test that cannot fail is worse than no test, because it reads as coverage.
+  # This reintroduces each bug the tests above claim to catch and asserts the
+  # suite goes red. It runs on one Node version only - it is verifying test
+  # logic, which does not vary across runtimes.
+  mutation:
+    name: tests actually fail when the code breaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run test:mutation

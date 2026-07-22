@@ -28,16 +28,29 @@
  * to avoid, so it must never be added "for convenience".
  */
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import express, { type Request, type Response } from 'express';
+import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
 
 import { VERSION, createServer } from './server.js';
 
 const PORT = Number(process.env.PORT ?? 8081);
 const HOST = process.env.HOST ?? '127.0.0.1';
 const BASE_URL = process.env.LIVETENNISAPI_BASE_URL;
+
+/** Read a positive integer from the environment, ignoring anything unusable. */
+function envInt(name: string, fallback: number): number {
+  const n = Number(process.env[name]);
+  return Number.isInteger(n) && n > 0 ? n : fallback;
+}
+
+// Requests per minute, per caller. Tunable without a rebuild so these can be
+// tightened during an incident, and so the tests can drive the limiter to
+// exhaustion in a handful of requests instead of hundreds.
+const ANON_LIMIT = envInt('MCP_RATE_LIMIT_ANON', 60);
+const KEYED_LIMIT = envInt('MCP_RATE_LIMIT_KEYED', 300);
 
 /**
  * Pull the caller's key off the request.
@@ -63,7 +76,58 @@ function callerKey(req: Request): string {
 }
 
 const app = express();
+
+// This process listens on loopback only and is reached through a Cloudflare
+// tunnel, so the ONLY peer is cloudflared on 127.0.0.1. Trusting just the
+// loopback hop lets `req.ip` resolve to the real client via X-Forwarded-For,
+// while a forged header from outside cannot reach us to begin with. Never
+// widen this to `true` — that would let anyone set their own rate-limit key.
+app.set('trust proxy', 'loopback');
+
 app.use(express.json({ limit: '1mb' }));
+
+/**
+ * Bucket a caller for rate limiting.
+ *
+ * Keyed by API key when there is one, so two users behind one NAT (or one
+ * corporate proxy) do not throttle each other, and one abusive key cannot spend
+ * an innocent neighbour's budget.
+ *
+ * The key is HASHED. This map is long-lived process memory that ends up in heap
+ * dumps and, if a limiter error is ever logged, in log lines — neither is a
+ * place a customer's credential should be sitting. A hash buckets identically
+ * without being able to give the secret back.
+ *
+ * With no key we fall back to IP. `ipKeyGenerator` is what normalises IPv6 to
+ * its /64 — a single v6 host is routinely handed 2^64 addresses, so keying on
+ * the raw address would let one machine trivially mint a fresh bucket per
+ * request and bypass the limit entirely.
+ */
+function limiterKey(req: Request): string {
+  const key = callerKey(req);
+  if (key) return `k:${createHash('sha256').update(key).digest('hex').slice(0, 32)}`;
+  return `ip:${ipKeyGenerator(req.ip ?? '')}`;
+}
+
+// Anonymous callers are indexers and browsers doing `initialize` + `tools/list`
+// — cheap, and none of it touches the upstream API. Authenticated callers get a
+// far higher ceiling because their real quota is enforced upstream per key and
+// per tier; this limit exists only to stop one client saturating the process.
+const limiter = rateLimit({
+  windowMs: 60_000,
+  limit: (req: Request) => (callerKey(req) ? KEYED_LIMIT : ANON_LIMIT),
+  keyGenerator: limiterKey,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  // Answer in the protocol the caller is speaking; an MCP client shown a stray
+  // HTML error page reports something misleading, not "slow down".
+  handler: (_req, res) =>
+    res.status(429).json({
+      jsonrpc: '2.0',
+      error: { code: -32000, message: 'Rate limit exceeded. Retry shortly, or send an API key for a higher limit.' },
+      id: null,
+    }),
+});
 
 // Browser clients need CORS, and `mcp-session-id` must be exposed or the
 // Streamable-HTTP client cannot read it. Wildcard origin with no credentials:
@@ -89,7 +153,7 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', server: 'livetennisapi-mcp', version: VERSION });
 });
 
-app.post('/mcp', async (req: Request, res: Response) => {
+app.post('/mcp', limiter, async (req: Request, res: Response) => {
   const id = randomUUID().slice(0, 8);
   // One server + one transport per request, bound to this caller's key alone.
   const server = createServer(callerKey(req), BASE_URL);

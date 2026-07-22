@@ -6,3 +6,6 @@ dist/
 # MCPB build output (artifact; the .mcpb ships as a release asset)
 dist-mcpb/
 *.mcpb
+
+# scratch file written by test/mutate.py
+.http.ts.pristine
