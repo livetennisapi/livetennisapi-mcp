@@ -3,6 +3,14 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] — 2026-07-22
+
+### Changed
+- Package description and README state that the odds and win-probability tools
+  require the PRO and ULTRA plans. All twelve tools are present on any key, but
+  the free tier serves scores, players and fixtures, so leading with odds
+  described the product line rather than what a new install actually returns.
+
 ## [1.2.1] — 2026-07-22
 
 ### Added
