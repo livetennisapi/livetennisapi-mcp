@@ -6,8 +6,9 @@
 
 **MCP server for the [Live Tennis API](https://livetennisapi.com).**
 
-Give Claude, Cursor, Zed or any MCP client live tennis scores, players, odds
-and model win-probability — for ATP, WTA, Challenger and ITF.
+Give Claude, Cursor, Zed or any MCP client live tennis scores, players and
+fixtures — for ATP, WTA, Challenger and ITF. Odds and model win-probability
+tools are included, and require the PRO and ULTRA plans.
 
 [![npm](https://img.shields.io/npm/v/livetennisapi-mcp.svg)](https://www.npmjs.com/package/livetennisapi-mcp)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
