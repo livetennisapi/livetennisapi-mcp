@@ -62,7 +62,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.0",
     "livetennisapi": "^1.0.0",
-    "zod": "^3.23.0"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
