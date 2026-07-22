@@ -47,56 +47,6 @@
       "required": false
     }
   },
-  "tools": [
-    {
-      "name": "get_live_matches",
-      "description": "Matches in progress, with live scores"
-    },
-    {
-      "name": "get_upcoming_matches",
-      "description": "Matches starting soon"
-    },
-    {
-      "name": "get_match",
-      "description": "Full detail for one match"
-    },
-    {
-      "name": "get_match_score",
-      "description": "Current score only \u2014 fastest read"
-    },
-    {
-      "name": "search_players",
-      "description": "Find players by name"
-    },
-    {
-      "name": "get_player",
-      "description": "Profile, ranking, country, handedness"
-    },
-    {
-      "name": "get_fixtures",
-      "description": "Forward schedule"
-    },
-    {
-      "name": "get_recent_results",
-      "description": "Completed matches and winners"
-    },
-    {
-      "name": "get_match_events",
-      "description": "Breaks, games, sets, momentum runs (PRO)"
-    },
-    {
-      "name": "get_match_odds",
-      "description": "Match-winner prices \u2014 bid / ask / mid (PRO)"
-    },
-    {
-      "name": "get_match_analysis",
-      "description": "Model thesis, win probability, key factors (ULTRA)"
-    },
-    {
-      "name": "check_api_status",
-      "description": "Reachability + which plan your key is on"
-    }
-  ],
   "compatibility": {
     "runtimes": {
       "node": ">=18"
