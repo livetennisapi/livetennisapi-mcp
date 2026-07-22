@@ -12,48 +12,56 @@ import subprocess
 import sys
 import pathlib
 
-SRC = pathlib.Path('src/http.ts')
-BACKUP = pathlib.Path('.http.ts.pristine')   # scratch copy, git-ignored
+SOURCES = [pathlib.Path('src/http.ts'), pathlib.Path('src/server.ts')]
+BACKUP_DIR = pathlib.Path('.mutation-pristine')   # scratch copies, git-ignored
 
-# (label, find, replace, which test must catch it)
+# (label, file, find, replace, which test must catch it)
 MUTATIONS = [
     ("M1  callerKey falls back to the operator's env key",
+     'src/http.ts',
      "  return '';\n}",
      "  return (process.env.LIVETENNISAPI_KEY ?? '').trim();\n}",
      'test/http-isolation.mjs'),
 
     ("M2  limiter keyed on IP only (one global bucket behind the tunnel)",
+     'src/http.ts',
      "  const key = callerKey(req);\n"
      "  if (key) return `k:${createHash('sha256').update(key).digest('hex').slice(0, 32)}`;\n",
      "",
      'test/http-ratelimit.mjs'),
 
     ("M3  flat limit, no higher ceiling for authenticated callers",
+     'src/http.ts',
      "limit: (req: Request) => (callerKey(req) ? KEYED_LIMIT : ANON_LIMIT),",
      "limit: ANON_LIMIT,",
      'test/http-ratelimit.mjs'),
 
     ("M4  limiter removed from the route entirely",
+     'src/http.ts',
      "app.post('/mcp', limiter, async",
      "app.post('/mcp', async",
      'test/http-ratelimit.mjs'),
 
     ("M5  /health placed behind the limiter (monitoring blinded under load)",
+     'src/http.ts',
      "app.get('/health', (_req, res) => {",
      "app.get('/health', limiter, (_req, res) => {",
      'test/http-ratelimit.mjs'),
 
     ("M6  anon and keyed limits swapped",
+     'src/http.ts',
      "limit: (req: Request) => (callerKey(req) ? KEYED_LIMIT : ANON_LIMIT),",
      "limit: (req: Request) => (callerKey(req) ? ANON_LIMIT : KEYED_LIMIT),",
      'test/http-ratelimit.mjs'),
 
     ("M7  stateless transport given session ids (server reuse across callers)",
+     'src/http.ts',
      "new StreamableHTTPServerTransport({ sessionIdGenerator: undefined })",
      "new StreamableHTTPServerTransport({ sessionIdGenerator: () => randomUUID() })",
      'test/http-isolation.mjs'),
 
     ("M8  429 answered as plain text, not JSON-RPC",
+     'src/http.ts',
      "    res.status(429).json({\n"
      "      jsonrpc: '2.0',\n"
      "      error: { code: -32000, message: 'Rate limit exceeded. Retry shortly, or send an API key for a higher limit.' },\n"
@@ -61,6 +69,40 @@ MUTATIONS = [
      "    }),",
      "    res.status(429).send('Too many requests'),",
      'test/http-ratelimit.mjs'),
+    ("M9  outputSchema dropped from every tool",
+     'src/server.ts',
+     "      outputSchema: {\n        ok: okField,",
+     "      _outputSchema: {\n        ok: okField,",
+     'test/tools-output.mjs'),
+
+    ("M10 annotations dropped (readOnlyHint no longer advertised)",
+     'src/server.ts',
+     "      annotations: READ_ONLY,",
+     "",
+     'test/tools-output.mjs'),
+
+    ("M11 guard's no-key path omits structuredContent (SDK throws)",
+     'src/server.ts',
+     "  const fail = (message: string): ToolResult => ({\n"
+     "    content: [{ type: 'text', text: message }],\n"
+     "    structuredContent: { ok: false, message },\n"
+     "  });",
+     "  const fail = (message: string): ToolResult => ({\n"
+     "    content: [{ type: 'text', text: message }],\n"
+     "  });",
+     'test/tools-output.mjs'),
+
+    ("M12 a parameter loses its description",
+     'src/server.ts',
+     "    .describe('Match id, as returned by get_live_matches, get_upcoming_matches or get_recent_results.');",
+     ";",
+     'test/tools-output.mjs'),
+
+    ("M13 structuredContent.message diverges from the text content",
+     'src/server.ts',
+     "        structuredContent: { ok: true, message: body, ...(data ?? {}) },",
+     "        structuredContent: { ok: true, message: 'ok', ...(data ?? {}) },",
+     'test/tools-output.mjs'),
 ]
 
 
@@ -87,19 +129,27 @@ def run_suite(test):
     return r.returncode, (r.stdout + r.stderr).strip().splitlines()[-1] if (r.stdout + r.stderr).strip() else ''
 
 
+def restore_all():
+    for src in SOURCES:
+        shutil.copy(BACKUP_DIR / src.name, src)
+
+
 def main():
-    shutil.copy(SRC, BACKUP)
+    BACKUP_DIR.mkdir(exist_ok=True)
+    for src in SOURCES:
+        shutil.copy(src, BACKUP_DIR / src.name)
     print('=== baseline: both suites must pass on the clean build ===')
-    for t in ('test/http-isolation.mjs', 'test/http-ratelimit.mjs'):
+    for t in ('test/http-isolation.mjs', 'test/http-ratelimit.mjs', 'test/tools-output.mjs'):
         code, last = run_suite(t)
         print(f'  {"PASS" if code == 0 else "FAIL"}  {t}: {last}')
         if code != 0:
-            print('baseline is not green — aborting'); shutil.copy(BACKUP, SRC); return 1
+            print('baseline is not green — aborting'); restore_all(); return 1
 
     print('\n=== mutations (every one must be KILLED) ===')
     survived = []
-    for label, find, repl, test in MUTATIONS:
-        shutil.copy(BACKUP, SRC)
+    for label, path, find, repl, test in MUTATIONS:
+        restore_all()
+        SRC = pathlib.Path(path)
         s = SRC.read_text()
         if find not in s:
             print(f'  SKIP      {label}  <- pattern not found, mutation is stale')
@@ -113,11 +163,11 @@ def main():
         else:
             print(f'  KILLED    {label}')
 
-    shutil.copy(BACKUP, SRC)
+    restore_all()
     sh("npm run build", timeout=180)
     print('\n=== restored; reverifying clean build ===')
     ok = True
-    for t in ('test/http-isolation.mjs', 'test/http-ratelimit.mjs'):
+    for t in ('test/http-isolation.mjs', 'test/http-ratelimit.mjs', 'test/tools-output.mjs'):
         code, last = run_suite(t)
         print(f'  {"PASS" if code == 0 else "FAIL"}  {t}: {last}')
         ok &= code == 0

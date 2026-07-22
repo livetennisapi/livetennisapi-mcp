@@ -66,6 +66,13 @@ jobs:
       - name: Rate limiting is armed and per-caller
         run: node test/http-ratelimit.mjs
 
+      # Every tool declares an outputSchema, and the SDK THROWS on any non-error
+      # result that omits structuredContent. A tier wall, a missing key and an
+      # empty result are all deliberately non-error here, so that combination can
+      # 500 all twelve tools at once. This drives each tool on both paths.
+      - name: Tools return valid structured content
+        run: node test/tools-output.mjs
+
   # A test that cannot fail is worse than no test, because it reads as coverage.
   # This reintroduces each bug the tests above claim to catch and asserts the
   # suite goes red. It runs on one Node version only - it is verifying test

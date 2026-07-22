@@ -1,7 +1,7 @@
 {
   "name": "livetennisapi-mcp",
   "mcpName": "io.github.livetennisapi/livetennisapi-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MCP server for the Live Tennis API \u2014 give Claude, Cursor and other LLM agents real-time tennis scores, players, odds and model win-probability.",
   "keywords": [
     "mcp",
@@ -51,10 +51,11 @@
     "build:mcpb": "tsup --config tsup.mcpb.config.ts",
     "pack:mcpb": "npm run build:mcpb && mcpb pack . livetennisapi-mcp.mcpb",
     "start:http": "node dist/http.js",
-    "test": "node test/protocol.mjs && node test/http-isolation.mjs && node test/http-ratelimit.mjs",
+    "test": "node test/protocol.mjs && node test/http-isolation.mjs && node test/http-ratelimit.mjs && node test/tools-output.mjs",
     "test:isolation": "node test/http-isolation.mjs",
     "test:ratelimit": "node test/http-ratelimit.mjs",
-    "test:mutation": "python3 test/mutate.py"
+    "test:mutation": "python3 test/mutate.py",
+    "test:tools": "node test/tools-output.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

@@ -9,3 +9,6 @@ dist-mcpb/
 
 # scratch file written by test/mutate.py
 .http.ts.pristine
+
+# scratch copies written by test/mutate.py
+.mutation-pristine/

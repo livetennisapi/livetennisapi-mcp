@@ -3,6 +3,42 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-07-22
+
+### Added
+- **Structured output on every tool.** Each of the 12 tools now declares an
+  `outputSchema` and returns `structuredContent` alongside the existing prose,
+  so a program can read fields directly instead of re-parsing English. The prose
+  is unchanged, so nothing regresses for current users.
+
+  This is riskier than it sounds and is covered by a test accordingly. Declaring
+  an output schema makes the SDK **throw** on any non-error result that omits
+  structured content — and a tier wall, a missing key and an empty result are
+  all deliberately non-error here. Left to each tool to remember, that would
+  have 500'd all twelve at once. Instead `guard()` emits the structured half
+  itself, so no individual tool can forget.
+
+- **Tool annotations** — `readOnlyHint`, `destructiveHint: false`,
+  `idempotentHint`, `openWorldHint`. These are simply true: every tool is a GET
+  against a live external API. Clients can use them to decide what is safe to
+  call without confirmation.
+
+- **Titles and complete parameter descriptions** on all 12 tools, so a client
+  can render and prompt for every input without guessing.
+
+- `test/tools-output.mjs` drives all 12 tools on both the no-key and success
+  paths against a stub upstream, and `test/mutate.py` now covers `src/server.ts`
+  too — 13 mutations, including one that removes exactly the structured-content
+  guarantee described above.
+
+### Changed
+- The no-key message no longer assumes stdio. It previously said only "set the
+  LIVETENNISAPI_KEY environment variable", which is wrong advice for anyone
+  calling the hosted HTTP endpoint; it now names both.
+- `Match.id` and `Player.id` are nullable in the output schemas, because the
+  upstream types allow their absence. Asserting otherwise would have made the
+  schema lie rather than make the data safe.
+
 ## [1.1.0] — 2026-07-22
 
 ### Added
