@@ -48,14 +48,17 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "build:mcpb": "tsup --config tsup.mcpb.config.ts",
-    "pack:mcpb": "npm run build:mcpb && mcpb pack . livetennisapi-mcp.mcpb"
+    "pack:mcpb": "npm run build:mcpb && mcpb pack . livetennisapi-mcp.mcpb",
+    "start:http": "node dist/http.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.2.1",
     "livetennisapi": "^1.0.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.5.0"
