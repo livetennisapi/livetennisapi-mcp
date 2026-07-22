@@ -46,7 +46,9 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "build:mcpb": "tsup --config tsup.mcpb.config.ts",
+    "pack:mcpb": "npm run build:mcpb && mcpb pack . livetennisapi-mcp.mcpb"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

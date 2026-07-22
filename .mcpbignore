@@ -1,0 +1,20 @@
+# The bundle ships ONE self-contained file (dist-mcpb/index.js, built with
+# noExternal) plus the manifest — never node_modules. Without this, `mcpb pack`
+# from the repo root would sweep in ~24 MB of dependencies that the bundled
+# build has already inlined.
+node_modules/
+src/
+test/
+.github/
+dist/
+*.mcpb
+tsconfig.json
+tsup*.config.ts
+package-lock.json
+CHANGELOG.md
+CONTRIBUTING.md
+SECURITY.md
+glama.json
+server.json
+Dockerfile
+.dockerignore

@@ -1,0 +1,105 @@
+{
+  "manifest_version": "0.3",
+  "name": "livetennisapi-mcp",
+  "display_name": "Live Tennis",
+  "version": "1.0.4",
+  "description": "Real-time tennis scores, players, fixtures and model win-probability for ATP, WTA, Challenger and ITF.",
+  "long_description": "Read-only access to professional tennis: live and upcoming matches with point-by-point scores, players and rankings, the forward fixture schedule, match-winner market prices and a model-driven win-probability. Covers ATP, WTA, Challenger and ITF, singles and doubles.\n\nThe server is tier-aware. An endpoint above your plan returns a plain-English explanation naming the tier required, as a normal result rather than a bare 403, so the model can tell you something true instead of guessing or retrying.\n\nA free tier needs no card and covers live/upcoming matches, scores, players and fixtures at 1,000 requests/day: https://livetennisapi.com/subscribe/free",
+  "author": {
+    "name": "Live Tennis API",
+    "url": "https://livetennisapi.com"
+  },
+  "homepage": "https://livetennisapi.com",
+  "documentation": "https://docs.livetennisapi.com",
+  "support": "https://github.com/livetennisapi/livetennisapi-mcp/issues",
+  "license": "MIT",
+  "keywords": [
+    "tennis",
+    "sports",
+    "live-scores",
+    "atp",
+    "wta",
+    "sports-data"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/livetennisapi/livetennisapi-mcp"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist-mcpb/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist-mcpb/index.js"
+      ],
+      "env": {
+        "LIVETENNISAPI_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "API key",
+      "description": "Your Live Tennis API key (twjp_...). Get one free, no card, at https://livetennisapi.com/subscribe/free. Optional \u2014 without it the server still starts and lists its tools, but only check_api_status returns data.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "get_live_matches",
+      "description": "Matches in progress, with live scores"
+    },
+    {
+      "name": "get_upcoming_matches",
+      "description": "Matches starting soon"
+    },
+    {
+      "name": "get_match",
+      "description": "Full detail for one match"
+    },
+    {
+      "name": "get_match_score",
+      "description": "Current score only \u2014 fastest read"
+    },
+    {
+      "name": "search_players",
+      "description": "Find players by name"
+    },
+    {
+      "name": "get_player",
+      "description": "Profile, ranking, country, handedness"
+    },
+    {
+      "name": "get_fixtures",
+      "description": "Forward schedule"
+    },
+    {
+      "name": "get_recent_results",
+      "description": "Completed matches and winners"
+    },
+    {
+      "name": "get_match_events",
+      "description": "Breaks, games, sets, momentum runs (PRO)"
+    },
+    {
+      "name": "get_match_odds",
+      "description": "Match-winner prices \u2014 bid / ask / mid (PRO)"
+    },
+    {
+      "name": "get_match_analysis",
+      "description": "Model thesis, win probability, key factors (ULTRA)"
+    },
+    {
+      "name": "check_api_status",
+      "description": "Reachability + which plan your key is on"
+    }
+  ],
+  "compatibility": {
+    "runtimes": {
+      "node": ">=18"
+    }
+  }
+}

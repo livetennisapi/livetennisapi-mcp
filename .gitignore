@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 *.tsbuildinfo
+
+# MCPB build output (artifact; the .mcpb ships as a release asset)
+dist-mcpb/
+*.mcpb
