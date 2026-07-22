@@ -1,7 +1,7 @@
 {
   "name": "livetennisapi-mcp",
   "mcpName": "io.github.livetennisapi/livetennisapi-mcp",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "MCP server for the Live Tennis API \u2014 give Claude, Cursor and other LLM agents real-time tennis scores, players, odds and model win-probability.",
   "keywords": [
     "mcp",
@@ -32,7 +32,8 @@
   "author": "Live Tennis API",
   "type": "module",
   "bin": {
-    "livetennisapi-mcp": "./dist/index.js"
+    "livetennisapi-mcp": "./dist/index.js",
+    "livetennisapi-mcp-http": "./dist/http.js"
   },
   "files": [
     "dist",

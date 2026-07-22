@@ -30,11 +30,23 @@ jobs:
       # A duplicated shebang is a hard syntax error, and this package runs via
       # `npx`, so it would break every user. That bug shipped once (a tsup banner
       # stacked on top of the shebang esbuild already preserves) - hence the guard.
-      - name: Exactly one shebang
+      - name: Exactly one shebang in each executable
         run: |
-          count=$(grep -c '^#!' dist/index.js)
-          echo "shebang lines: $count"
-          [ "$count" = "1" ]
+          for f in dist/index.js dist/http.js; do
+            count=$(grep -c '^#!' "$f")
+            echo "$f: $count shebang line(s)"
+            [ "$count" = "1" ]
+          done
+
+      # The server reports VERSION to every client and directory that indexes
+      # it. It lives in source, so it can drift from package.json and quietly
+      # start reporting a version that was never released.
+      - name: Reported version matches package.json
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          src=$(grep -oP "export const VERSION = '\K[^']+" src/server.ts)
+          echo "package.json=$pkg  source=$src"
+          [ "$pkg" = "$src" ]
 
       - name: Speaks the MCP protocol
         run: node test/protocol.mjs

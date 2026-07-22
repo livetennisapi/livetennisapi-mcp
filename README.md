@@ -93,11 +93,33 @@ so you can diagnose that without guessing.
 | Match events + odds | — | ✅ | ✅ |
 | Model analysis + win probability | — | — | ✅ |
 
+## Hosted endpoint
+
+Most people should use the stdio server above — your key never leaves your
+machine. For clients that can only speak HTTP, there is also a hosted
+Streamable-HTTP endpoint:
+
+```
+https://mcp.livetennisapi.com/mcp
+```
+
+Send your key as `Authorization: Bearer twjp_…`, `X-API-Key: twjp_…`, or
+`?token=` if your client cannot set headers. Tools are listable without a key,
+so directories can introspect the server; calling one needs a key.
+
+It is multi-tenant and holds **no key of its own**: every request builds its own
+server bound to the key that request presented, and there is deliberately no
+fallback to the host's environment. Rate limited per caller — 60 req/min
+anonymous, 300 keyed — with your real quota enforced upstream per key and tier.
+
+Self-hosting it: `deploy/install-http.sh` and `deploy/TUNNEL.md`.
+
 ## Notes
 
 - **Read-only.** Every tool is a GET; nothing here can modify anything.
-- **Your key stays local.** It is read from the environment by the server
-  process on your machine and sent only to `api.livetennisapi.com`.
+- **Your key stays local** with the stdio server. It is read from the
+  environment by the server process on your machine and sent only to
+  `api.livetennisapi.com`.
 - Requires Node 18+.
 
 ## Development
@@ -106,7 +128,16 @@ so you can diagnose that without guessing.
 npm install
 npm run build
 LIVETENNISAPI_KEY=twjp_… node dist/index.js   # speaks MCP over stdio
+node dist/http.js                             # speaks MCP over HTTP, port 8081
+
+npm test               # protocol + transport isolation + rate limiting
+npm run test:mutation  # proves those tests fail when the code breaks
 ```
+
+`test:mutation` is worth understanding before changing `src/http.ts`. It
+reintroduces each bug the tests claim to catch and asserts the suite goes red.
+It is not ceremony: the first version of the rate-limit test passed while the
+limiter was bucketing every caller together.
 
 Built on the official [`livetennisapi`](https://www.npmjs.com/package/livetennisapi)
 client.

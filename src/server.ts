@@ -31,7 +31,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-export const VERSION = '1.0.4';
+export const VERSION = '1.1.0';
 
 type ToolResult = { content: { type: 'text'; text: string }[]; isError?: boolean };
 
