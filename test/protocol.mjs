@@ -20,6 +20,10 @@ const requests = [
   { jsonrpc: '2.0', method: 'notifications/initialized' },
   { jsonrpc: '2.0', id: 2, method: 'tools/list' },
   { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'get_live_matches', arguments: { limit: 1 } } },
+  // Automated indexers (Glama et al.) run the full introspection triple
+  // unconditionally, not just tools/list. These must not error.
+  { jsonrpc: '2.0', id: 4, method: 'resources/list' },
+  { jsonrpc: '2.0', id: 5, method: 'prompts/list' },
 ];
 
 const env = { ...process.env };
@@ -58,4 +62,17 @@ if (call.isError) fail('missing-key path returned isError; it must degrade grace
 const text = call.content?.[0]?.text ?? '';
 if (!/LIVETENNISAPI_KEY/.test(text)) fail('missing-key message does not name the env var');
 
-console.log(`OK - handshake, ${tools.length} tools, graceful no-key path`);
+// A full introspection pass must not error. This server exposes no resources or
+// prompts, but an indexer that calls them regardless has to get an empty list
+// rather than -32601, or the run can be recorded as a failed introspection.
+for (const [id, key] of [[4, 'resources'], [5, 'prompts']]) {
+  const m = messages.find((x) => x.id === id);
+  if (!m) fail(`no response to ${key}/list`);
+  if (m.error) fail(`${key}/list errored (${m.error.code}); indexers call it unconditionally`);
+  if (!Array.isArray(m.result?.[key])) fail(`${key}/list did not return a ${key} array`);
+}
+
+if (!init.result.capabilities?.resources) fail('resources capability not advertised');
+if (!init.result.capabilities?.prompts) fail('prompts capability not advertised');
+
+console.log(`OK - handshake, ${tools.length} tools, empty resources/prompts, graceful no-key path`);

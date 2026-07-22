@@ -3,6 +3,28 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] — 2026-07-22
+
+### Fixed
+- **A full MCP introspection pass errored twice.** This server exposes tools
+  only, and the SDK registers the `resources/*` and `prompts/*` handlers lazily
+  — so `resources/list` and `prompts/list` answered `-32601 Method not found`.
+  That is spec-correct (the capabilities were never advertised, so a conforming
+  client would not call them), but automated indexers are not conforming
+  clients: Glama documents its introspection pass as `tools/list`,
+  `resources/list`, `prompts/list` run unconditionally, and a pass that errors
+  twice is a plausible way to end up unindexed and unscored.
+
+  Both now advertise the capability and return an empty collection, which is
+  the honest answer — supported, nothing in it. Preferable to registering a
+  placeholder resource purely to satisfy an indexer, which would put a fake
+  entry in front of real users. `test/protocol.mjs` covers the full triple.
+
+### Added
+- `Dockerfile` — indexers need to build and run the server to introspect it.
+  Multi-stage, dev dependencies dropped, runs as the unprivileged `node` user.
+  Works with no credentials: the no-key path stays non-fatal by design.
+
 ## [1.0.3] — 2026-07-21
 
 ### Fixed

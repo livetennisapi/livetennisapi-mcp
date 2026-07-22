@@ -18,6 +18,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
+  ListPromptsRequestSchema,
+  ListResourceTemplatesRequestSchema,
+  ListResourcesRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import {
   LiveTennisAPI,
   NotFound,
   RateLimited,
@@ -28,7 +33,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-const VERSION = '1.0.3';
+const VERSION = '1.0.4';
 
 const apiKey = (process.env.LIVETENNISAPI_KEY ?? '').trim();
 const client = new LiveTennisAPI({
@@ -106,6 +111,26 @@ function summarise(match: Match): string {
 }
 
 const server = new McpServer({ name: 'livetennisapi', version: VERSION });
+
+// This server exposes tools only — no resources, no prompts. The SDK registers
+// the `resources/*` and `prompts/*` handlers lazily, i.e. only once you add one,
+// so without this block those methods answer `-32601 Method not found`.
+//
+// That is spec-correct: we do not advertise the capabilities, so a conforming
+// client should never call them. Automated indexers are not conforming clients.
+// Glama, for one, documents its introspection pass as `tools/list`,
+// `resources/list`, `prompts/list` unconditionally — and a run that errors twice
+// is a plausible way to end up unscored.
+//
+// So answer them honestly instead: the capability is supported, the collection
+// is empty. Preferable to registering a placeholder resource just to keep an
+// indexer happy, which would put a fake entry in front of real users.
+server.server.registerCapabilities({ resources: {}, prompts: {} });
+server.server.setRequestHandler(ListResourcesRequestSchema, async () => ({ resources: [] }));
+server.server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({
+  resourceTemplates: [],
+}));
+server.server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts: [] }));
 
 // -- BASIC --------------------------------------------------------------------
 
