@@ -21,7 +21,11 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/livetennisapi-mcp-http
+# __MCP_HTTP_BIN__ is substituted at install time by deploy/install-http.sh with
+# the path npm actually resolved to. npm's global prefix varies by how node was
+# installed (/usr vs /usr/local vs a version manager), and a wrong path here
+# fails at start with an opaque 203/EXEC.
+ExecStart=__MCP_HTTP_BIN__
 
 # Bind to loopback only. The tunnel is the sole ingress path; binding 0.0.0.0
 # would expose the endpoint directly on the public IP, bypassing Cloudflare's

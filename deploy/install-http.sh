@@ -44,16 +44,22 @@ npm install -g "livetennisapi-mcp@$VERSION"
 
 BIN="$(command -v livetennisapi-mcp-http || true)"
 [[ -n "$BIN" ]] || die "livetennisapi-mcp-http not on PATH after install — does this version ship the http bin?"
-# The unit hardcodes /usr/bin/livetennisapi-mcp-http; if npm put it elsewhere
-# the unit would fail to start with a confusing 203/EXEC.
-[[ "$BIN" == '/usr/bin/livetennisapi-mcp-http' ]] \
-    || die "installed at $BIN but the unit expects /usr/bin/livetennisapi-mcp-http — update ExecStart"
+[[ -x "$BIN" ]] || die "$BIN is not executable"
+echo "-> binary: $BIN"
 
 installed=$(npm list -g --depth 0 livetennisapi-mcp 2>/dev/null | grep -oP 'livetennisapi-mcp@\K[0-9.]+' || echo '?')
 echo "-> installed version: $installed"
 
 echo "==> installing $UNIT_DST"
-install -m 0644 "$UNIT_SRC" "$UNIT_DST"
+sed "s#__MCP_HTTP_BIN__#${BIN}#" "$UNIT_SRC" > "$UNIT_DST"
+chmod 0644 "$UNIT_DST"
+# `grep -q ... && die` would abort the script on the SUCCESS path here: grep
+# exits 1 when it finds nothing, and under `set -e` that non-zero compound
+# status ends the run. Use an if-block so only a real leftover placeholder dies.
+if grep -q '__MCP_HTTP_BIN__' "$UNIT_DST"; then
+    die "placeholder substitution failed — unit still contains __MCP_HTTP_BIN__"
+fi
+
 systemctl daemon-reload
 systemctl enable "$UNIT_NAME" >/dev/null
 systemctl restart "$UNIT_NAME"

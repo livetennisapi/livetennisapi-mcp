@@ -25,6 +25,27 @@ Reload with `docker restart cloudflared-tennis` (the tunnel runs as a container
 here, `network_mode: host`, which is why `localhost:8081` resolves to the host's
 port).
 
+> **Do not try `docker kill -s HUP`.** SIGHUP is cloudflared's config-reload
+> signal when it runs as a plain process, but this container does not handle it
+> — the signal terminates it outright. Doing that took the tunnel down for ~30s
+> and 502'd `api.livetennisapi.com`, the marketing site, the affiliate portal
+> and the blog until `docker start`. A plain `docker restart` costs the same
+> ~30s of reconnect but is at least predictable. There is no zero-downtime
+> reload available here; treat any ingress change as a brief public outage and
+> make it deliberately.
+
+### DNS: mind which zone your credentials cover
+
+`cloudflared tunnel route dns` infers the zone from the hostname, using whatever
+`~/.cloudflared/cert.pem` is authorized for. If that cert does **not** cover the
+zone you named, it does not fail — it silently creates the record as a
+*subdomain of the zone it does have*. Asking for `mcp.livetennisapi.com` with a
+cert scoped to `the-supervisor.us` produces `mcp.livetennisapi.com.the-supervisor.us`,
+which resolves, proxies, and looks like success in the log line.
+
+Check the output hostname, not just the exit code. `cloudflared` has no command
+to delete a DNS record, so cleaning up requires the dashboard or the API.
+
 ## Do not put this hostname behind Cloudflare Access
 
 `tennis.the-supervisor.us` is behind Access with GitHub SSO. This hostname must
