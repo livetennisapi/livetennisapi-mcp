@@ -40,7 +40,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-export const VERSION = '1.2.0';
+export const VERSION = '1.2.1';
 
 type ToolResult = {
   content: { type: 'text'; text: string }[];

@@ -6,13 +6,13 @@
     "url": "https://github.com/livetennisapi/livetennisapi-mcp",
     "source": "github"
   },
-  "version": "1.2.0",
+  "version": "1.2.1",
   "websiteUrl": "https://livetennisapi.com",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "livetennisapi-mcp",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "transport": {
         "type": "stdio"
       },

@@ -3,6 +3,18 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] — 2026-07-22
+
+### Added
+- **`/.well-known/glama.json`** on the HTTP transport, proving domain ownership
+  to directories that verify maintainership by fetching a file from the server's
+  own domain.
+
+  The address is read from `MCP_MAINTAINER_EMAIL` rather than committed. This
+  repository is public, and a maintainer's address baked into the source is a
+  spam target for anyone reading it. The route is registered only when that
+  variable is set, so a self-hoster never accidentally serves ours.
+
 ## [1.2.0] — 2026-07-22
 
 ### Added

@@ -153,6 +153,24 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', server: 'livetennisapi-mcp', version: VERSION });
 });
 
+// Directory ownership proof. Glama verifies that whoever controls this domain
+// is the maintainer by fetching this file and matching the email against their
+// account — the same pattern as a DNS TXT record, but over HTTP.
+//
+// The address comes from the environment rather than the source, because this
+// repository is public and a maintainer's address baked into it is a spam
+// target for anyone reading the code. The route simply does not exist unless an
+// operator sets the variable, so a self-hoster never accidentally serves ours.
+const MAINTAINER_EMAIL = process.env.MCP_MAINTAINER_EMAIL?.trim();
+if (MAINTAINER_EMAIL) {
+  app.get('/.well-known/glama.json', (_req, res) => {
+    res.json({
+      $schema: 'https://glama.ai/mcp/schemas/connector.json',
+      maintainers: [{ email: MAINTAINER_EMAIL }],
+    });
+  });
+}
+
 app.post('/mcp', limiter, async (req: Request, res: Response) => {
   const id = randomUUID().slice(0, 8);
   // One server + one transport per request, bound to this caller's key alone.
