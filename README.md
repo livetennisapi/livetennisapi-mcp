@@ -114,6 +114,76 @@ anonymous, 300 keyed — with your real quota enforced upstream per key and tier
 
 Self-hosting it: `deploy/install-http.sh` and `deploy/TUNNEL.md`.
 
+## Use with Claude
+
+**As a connector.** In Claude, add a custom connector and paste the endpoint with
+your key as a query parameter — no OAuth, nothing to install:
+
+```
+https://mcp.livetennisapi.com/mcp?token=twjp_…
+```
+
+`?token=` exists for clients that cannot set request headers. The tradeoff, stated
+plainly: a key in a URL is not written to our logs, but it *is* visible to the CDN
+in front of the endpoint and is stored in the connector's configuration. Prefer
+`Authorization: Bearer twjp_…` wherever your client lets you set a header.
+
+**From the Messages API.** Claude can call the endpoint directly. Both halves are
+required — the server *and* a matching toolset entry; sending `mcp_servers` alone
+is rejected as a validation error:
+
+```python
+client.beta.messages.create(
+    model="claude-opus-4-8",
+    max_tokens=4096,
+    betas=["mcp-client-2025-11-20"],
+    mcp_servers=[{
+        "type": "url",
+        "name": "livetennisapi",
+        "url": "https://mcp.livetennisapi.com/mcp",
+        "authorization_token": os.environ["LIVETENNISAPI_KEY"],
+    }],
+    tools=[{"type": "mcp_toolset", "mcp_server_name": "livetennisapi"}],
+    messages=[{"role": "user", "content": "What tennis is live right now?"}],
+)
+```
+
+The `authorization_token` is sent as a bearer token, which is exactly what this
+server already accepts — no separate credential to obtain.
+
+## Use with Codex
+
+One command:
+
+```bash
+codex mcp add livetennisapi \
+  --url https://mcp.livetennisapi.com/mcp \
+  --bearer-token-env-var LIVETENNISAPI_KEY
+```
+
+Or write it to `~/.codex/config.toml` yourself — Codex shares that file across the
+CLI, the IDE extension and the desktop app:
+
+```toml
+[mcp_servers.livetennisapi]
+url = "https://mcp.livetennisapi.com/mcp"
+bearer_token_env_var = "LIVETENNISAPI_KEY"
+```
+
+Use `bearer_token_env_var`, not `bearer_token`: it keeps the key in your
+environment rather than committing it to a config file.
+
+There is also a **Codex plugin**, on its own marketplace:
+
+```bash
+codex plugin marketplace add livetennisapi/livetennisapi-codex-plugin
+```
+
+That registers the marketplace; install the plugin from Codex's plugin picker.
+Source: [livetennisapi-codex-plugin](https://github.com/livetennisapi/livetennisapi-codex-plugin).
+
+The stdio route works too, unchanged: `npx -y livetennisapi-mcp`.
+
 ## Notes
 
 - **Read-only.** Every tool is a GET; nothing here can modify anything.
