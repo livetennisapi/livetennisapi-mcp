@@ -222,9 +222,14 @@ Everything in the Live Tennis API developer surface:
 | Python client | `pip install livetennisapi` | [repo](https://github.com/livetennisapi/livetennisapi-python) | [package](https://pypi.org/project/livetennisapi/) |
 | JavaScript / TypeScript client | `npm install livetennisapi` | [repo](https://github.com/livetennisapi/livetennisapi-js) | [package](https://www.npmjs.com/package/livetennisapi) |
 | MCP server for LLM agents **(this repo)** | `npx livetennisapi-mcp` | — | [package](https://www.npmjs.com/package/livetennisapi-mcp) |
+| Vercel AI SDK tools | `npm install livetennisapi-ai` | [repo](https://github.com/livetennisapi/livetennisapi-ai) | — |
+| Break-point starter — Python | — | [repo](https://github.com/livetennisapi/livetennisapi-starter-python) | — |
+| Break-point starter — Node | — | [repo](https://github.com/livetennisapi/livetennisapi-starter-node) | — |
+| Break-point starter — Go | — | [repo](https://github.com/livetennisapi/livetennisapi-starter-go) | — |
 
 - **API reference** — <https://docs.livetennisapi.com> ([plain-HTML version](https://docs.livetennisapi.com/reference.html), no JavaScript required)
 - **OpenAPI 3.1 specification** — [livetennisapi/openapi](https://github.com/livetennisapi/openapi)
+- **Products** — <https://livetennisapi.com/products>
 - **Website and plans** — <https://livetennisapi.com>
 
 ## Licence
