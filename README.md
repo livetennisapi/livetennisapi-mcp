@@ -81,18 +81,22 @@ upgrade. The assistant can then tell you something true and actionable:
 
 > This data requires the ULTRA plan, and the configured API key is on a lower
 > tier. Nothing is wrong with the key — the endpoint is simply not included in
-> the current plan. Upgrade at https://livetennisapi.com/#pricing
+> the current plan. Upgrade in place at https://livetennisapi.com/subscribe/upgrade
 
 `check_api_status` probes upward to report which plan your key is actually on,
 so you can diagnose that without guessing.
 
 ## Plans
 
-| | BASIC | PRO | ULTRA |
-|---|:--:|:--:|:--:|
-| Matches, scores, players, fixtures, results | ✅ | ✅ | ✅ |
-| Match events + odds | — | ✅ | ✅ |
-| Model analysis + win probability | — | — | ✅ |
+| | FREE | BASIC | PRO | ULTRA |
+|---|:--:|:--:|:--:|:--:|
+| Matches, scores, players, fixtures | ✅ | ✅ | ✅ | ✅ |
+| Completed-match listings (results)¹ | — | ✅ | ✅ | ✅ |
+| Match events + odds | — | — | ✅ | ✅ |
+| Model analysis + win probability | — | — | — | ✅ |
+| | $0 — no card | $9.99/mo | $29.99/mo | $99.99/mo |
+
+¹ Also unlocked by any History plan, which works on top of a free key.
 
 ## Hosted endpoint
 

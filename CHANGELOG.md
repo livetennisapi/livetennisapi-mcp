@@ -3,6 +3,18 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.3] — 2026-08-02
+
+### Changed
+- README Plans table now shows the FREE tier ($0, no card) and correctly places
+  completed-match listings at BASIC (or any History plan) instead of bundling
+  "results" with the free surface.
+- Tier-wall example answer points at the in-place upgrade flow
+  (`/subscribe/upgrade`) instead of the pricing page.
+- `manifest.json` (MCPB) and `server.json` (MCP Registry) versions re-synced to
+  the package version — they had drifted to 1.0.4 and 1.2.2.
+- `livetennisapi` dependency floor raised to ^1.2.0.
+
 ## [1.2.2] — 2026-07-22
 
 ### Changed
