@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "livetennisapi-mcp",
   "display_name": "Live Tennis",
-  "version": "1.0.4",
+  "version": "1.2.3",
   "description": "Real-time tennis scores, players, fixtures and model win-probability for ATP, WTA, Challenger and ITF.",
   "long_description": "Read-only access to professional tennis: live and upcoming matches with point-by-point scores, players and rankings, the forward fixture schedule, match-winner market prices and a model-driven win-probability. Covers ATP, WTA, Challenger and ITF, singles and doubles.\n\nThe server is tier-aware. An endpoint above your plan returns a plain-English explanation naming the tier required, as a normal result rather than a bare 403, so the model can tell you something true instead of guessing or retrying.\n\nA free tier needs no card and covers live/upcoming matches, scores, players and fixtures at 1,000 requests/day: https://livetennisapi.com/subscribe/free",
   "author": {
