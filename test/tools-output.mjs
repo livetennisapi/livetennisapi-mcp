@@ -56,6 +56,40 @@ const ANALYSIS = {
   profile: { win_probability_p1: 0.61, expected_closeness: 0.4, volatility_rating: 'medium', key_factors: ['serve'] },
   thesis: { pick_side: 1, confidence: 0.7, state: 'active', reasoning: 'Better on hard courts.' },
 };
+const TOURNAMENT = {
+  id: 'atp-test-open', name: 'Test Open', tour: 'atp', surface: 'hard', indoor: false,
+  city: 'Testville', country: 'GB', category: 'atp_250',
+};
+const ARCHIVE_SIDE = {
+  name: 'Old Player', country: 'SWE', rank: 1, seed: 1, player_id: 100437,
+  hand: 'R', height_cm: 180, age: 24.1, entry: null,
+};
+const ARCHIVE_MATCH = {
+  id: 555, source_id: '1980-540-1', tour: 'atp', level: 'G', tournament: 'Old Slam',
+  surface: 'grass', event_date: '1980-06-23', round: 'F', best_of: 5, minutes: 235,
+  winner: ARCHIVE_SIDE, loser: { ...ARCHIVE_SIDE, name: 'Other Player', rank: 2, seed: 2 },
+  score: '1-6 7-5 6-3 6-7 8-6', outcome: 'completed',
+  stats: { winner: { aces: 9, double_faults: 2 }, loser: { aces: 11, double_faults: 4 } },
+};
+const ARCHIVE_BIO = {
+  id: 100437, tour: 'atp', name: 'Old Player', hand: 'R', dob: '1956-06-06',
+  country: 'SWE', height_cm: 180, career_high_rank: 1, career_high_date: '1977-08-23',
+};
+const CAREER = {
+  player: { name: 'Old Player' },
+  span: { first: '1973-01-01', last: '1983-07-25' },
+  record: { wins: 654, losses: 140, titles: 66, by_surface: { grass: { wins: 100, losses: 20 } }, by_level: { G: { wins: 141, losses: 16 } } },
+  by_year: [{ year: 1980, wins: 70, losses: 6 }],
+  serve: { matches_with_stats: 0, aces: 0, double_faults: 0, serve_points: 0, first_in: 0, first_won: 0, second_won: 0, serve_games: 0, bp_saved: 0, bp_faced: 0, first_in_pct: null, first_won_pct: null, second_won_pct: null, bp_saved_pct: null, aces_per_match: null },
+};
+const H2H = {
+  players: { p1: { name: 'Old Player' }, p2: { name: 'Other Player' } },
+  totals: { p1_wins: 7, p2_wins: 7, meetings: 14, undecided: 0 },
+  by_surface: { grass: { p1: 2, p2: 1 }, unknown: { p1: 0, p2: 0 } },
+  meetings: [
+    { era: 'archive', date: '1980-06-23', tournament: 'Old Slam', level: 'G', round: 'F', surface: 'grass', score: '1-6 7-5 6-3 6-7 8-6', outcome: 'completed', winner: 1, archive_match_id: 555 },
+  ],
+};
 
 const page = (row) => ({ data: [row], meta: { limit: 1, offset: 0, count: 1 } });
 
@@ -76,6 +110,13 @@ const upstream = createServer((req, res) => {
   if (path.includes('/fixtures')) return send(page(FIXTURE));
   // A trailing numeric segment means one item; otherwise a collection.
   const single = /\/\d+$/.test(path);
+  // The archive and h2h routes must sit ABOVE the generic /players and
+  // /matches matchers, or /history/archive/players lands on the roster stub.
+  if (path.includes('/archive/players')) return send(page(ARCHIVE_BIO));
+  if (path.includes('/archive/career')) return send(CAREER);
+  if (path.includes('/archive/matches')) return send(single ? ARCHIVE_MATCH : page(ARCHIVE_MATCH));
+  if (path.includes('/h2h')) return send(H2H);
+  if (path.includes('/tournaments')) return send(path.includes('/tournaments/') ? TOURNAMENT : page(TOURNAMENT));
   if (path.includes('/players')) return send(single ? PLAYER : page(PLAYER));
   if (path.includes('/matches')) return send(single ? MATCH : page(MATCH));
   send(page(MATCH));
@@ -120,6 +161,13 @@ const ARGS = {
   get_player: { player_id: 1 },
   get_fixtures: { limit: 2 },
   get_recent_results: { limit: 2 },
+  search_tournaments: { query: 'test', limit: 2 },
+  get_tournament: { tournament_id: 'atp-test-open' },
+  search_archive_matches: { player_name: 'old player', round: 'F', limit: 2 },
+  get_archive_match: { archive_match_id: 555 },
+  search_archive_players: { query: 'old player', limit: 2 },
+  get_archive_career: { name: 'old player' },
+  get_h2h: { player1: 'old player', player2: 'other player' },
   get_match_events: { match_id: 101, limit: 2 },
   get_match_odds: { match_id: 101, limit: 2 },
   get_match_analysis: { match_id: 101 },
@@ -137,7 +185,7 @@ async function main() {
 
   const list = await rpc({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} });
   const tools = list?.result?.tools ?? [];
-  if (tools.length !== 12) fail(`expected 12 tools, got ${tools.length}`);
+  if (tools.length !== 19) fail(`expected 19 tools, got ${tools.length}`);
 
   // 1. Metadata every tool must carry. These are what a directory scores, and
   //    a missing one is invisible until something else reports a low number.
@@ -199,7 +247,7 @@ async function main() {
        + `this test is not proving much. Unfed: ${noData.join(', ')}. Paths asked: ${[...new Set(asked)].join(' ')}`);
   }
 
-  console.log(`OK - 12 tools · outputSchema + annotations + param descriptions · `
+  console.log(`OK - 19 tools · outputSchema + annotations + param descriptions · `
     + `structuredContent valid on both the no-key and success paths`
     + (noData.length ? ` · stub could not feed: ${noData.join(', ')}` : ''));
 }
