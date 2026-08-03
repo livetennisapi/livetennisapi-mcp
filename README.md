@@ -52,6 +52,8 @@ Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/su
 > *"Who's winning the Alcaraz match, and what does the model give him?"*
 > *"Show me Sinner's ranking and recent results."*
 > *"What are the current odds on match 18953?"*
+> *"What's the all-time head-to-head between Borg and McEnroe?"*
+> *"List Navratilova's Grand Slam finals from the archive."*
 
 ## Tools
 
@@ -64,11 +66,25 @@ Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/su
 | `search_players` | Find players by name | FREE |
 | `get_player` | Profile, ranking, country, handedness | FREE |
 | `get_fixtures` | Forward schedule | FREE |
+| `search_tournaments` | Tournament catalogue — surface, location, category | FREE |
+| `get_tournament` | One tournament by its stable id | FREE |
 | `get_recent_results` | Completed matches and winners | BASIC |
+| `search_archive_matches` | Results archive (1968–2022) — historical results with ranks and seeds at the time | BASIC |
+| `get_archive_match` | One archive result, with serve stats where the era recorded them | BASIC |
+| `search_archive_players` | Archive bios — hand, DOB, career-high rank | BASIC |
+| `get_archive_career` | Career W-L, titles and serve aggregates over the archive | BASIC |
+| `get_h2h` | Cross-era head-to-head — archive + current, one record | BASIC |
 | `get_match_events` | Breaks, games, sets, momentum runs | PRO |
 | `get_match_odds` | Match-winner prices — bid / ask / mid | PRO |
 | `get_match_analysis` | Model thesis, win probability, key factors | ULTRA |
 | `check_api_status` | Reachability + which plan your key is on | — |
+
+The five BASIC history tools are also unlocked by any History plan, which works
+on top of a free key. The **results archive (1968–2022)** — ATP and WTA, main
+draws, qualifying and the ITF/futures tiers — ends exactly where our own
+results begin (2023), so `search_archive_matches` answers "Borg's Wimbledon
+finals" and `get_recent_results` answers "yesterday's scores"; `get_h2h` spans
+both in one call.
 
 ## Tier awareness
 
@@ -90,8 +106,9 @@ so you can diagnose that without guessing.
 
 | | FREE | BASIC | PRO | ULTRA |
 |---|:--:|:--:|:--:|:--:|
-| Matches, scores, players, fixtures | ✅ | ✅ | ✅ | ✅ |
+| Matches, scores, players, fixtures, tournaments | ✅ | ✅ | ✅ | ✅ |
 | Completed-match listings (results)¹ | — | ✅ | ✅ | ✅ |
+| Results archive (1968–2022) + head-to-head¹ | — | ✅ | ✅ | ✅ |
 | Match events + odds | — | — | ✅ | ✅ |
 | Model analysis + win probability | — | — | — | ✅ |
 | | $0 — no card | $9.99/mo | $29.99/mo | $99.99/mo |

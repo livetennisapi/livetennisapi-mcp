@@ -12,6 +12,9 @@ import { spawn } from 'node:child_process';
 const EXPECTED_TOOLS = [
   'get_live_matches', 'get_upcoming_matches', 'get_match', 'get_match_score',
   'search_players', 'get_player', 'get_fixtures', 'get_recent_results',
+  'search_tournaments', 'get_tournament',
+  'search_archive_matches', 'get_archive_match', 'search_archive_players',
+  'get_archive_career', 'get_h2h',
   'get_match_events', 'get_match_odds', 'get_match_analysis', 'check_api_status',
 ];
 

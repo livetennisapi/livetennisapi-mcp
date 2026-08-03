@@ -3,6 +3,46 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-08-03
+
+### Added
+- **Seven new read-only tools** (12 → 19), same shape as the rest — titles,
+  parameter descriptions, `outputSchema` + `structuredContent`, read-only
+  annotations, tier walls as normal results:
+  - `search_tournaments` / `get_tournament` (FREE) — the tournament catalogue,
+    the stable id space match objects carry as `tournament_id`: surface,
+    indoor, host city/country and category where curated.
+  - `search_archive_matches` / `get_archive_match` (BASIC, or any History
+    plan) — the **results archive (1968–2022)**: ATP and WTA, main draws,
+    qualifying and the ITF/futures tiers. Winner/loser-shaped results with
+    ranks and seeds AT THE TIME of the match; the detail read adds per-match
+    serve statistics where the era recorded them (null for most pre-1991
+    rows, honestly). The archive ends 2022-12-31, exactly where
+    `get_recent_results` begins.
+  - `search_archive_players` (BASIC/History) — archive bios: hand, DOB,
+    country, height, career-high rank and the week it was first reached.
+  - `get_archive_career` (BASIC/History) — career W-L by surface/level/year,
+    titles, and summed serve stats with honest coverage
+    (`matches_with_stats`).
+  - `get_h2h` (BASIC/History) — cross-era head-to-head: the results archive
+    plus our own completed matches (2023→now) in one record. Each meeting's
+    `winner` is 1|2 of the request, and carries its `outcome` so walkovers
+    and retirements can be excluded.
+- **Ambiguous names come back as candidates, not errors.** `/h2h` and the
+  career endpoint refuse a fragment matching more than one player
+  (`ambiguous_name`) rather than summing two people into one record; the
+  guard now relays the candidate list as a normal result so the model can
+  disambiguate instead of retrying blind.
+
+### Changed
+- `livetennisapi` dependency floor raised to ^1.3.0 (the SDK release that
+  carries the archive, h2h and tournament methods).
+- Tier blurbs (tool results and `check_api_status`) now name the results
+  archive (1968–2022) and head-to-head under BASIC, and tournaments under
+  FREE.
+- `server.json` (MCP Registry) and `manifest.json` (MCPB) bumped in lockstep
+  with the package version.
+
 ## [1.2.3] — 2026-08-02
 
 ### Changed
