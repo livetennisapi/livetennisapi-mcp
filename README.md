@@ -253,6 +253,10 @@ Everything in the Live Tennis API developer surface:
 - **Products** — <https://livetennisapi.com/products>
 - **Website and plans** — <https://livetennisapi.com>
 
+## Affiliate program
+
+Know developers who need tennis data? The [affiliate program](https://affiliates.livetennisapi.com/program) pays 51% recurring commission for the life of every referred subscription — 30-day cookie, and the people you refer get 10% off.
+
 ## Licence
 
 MIT — see [LICENSE](LICENSE). Use of the API service is governed by the
