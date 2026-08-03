@@ -30,17 +30,21 @@ import {
   ListResourcesRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import {
+  BadRequest,
   LiveTennisAPI,
   NotFound,
   RateLimited,
   Unauthorized,
   UpgradeRequired,
   formatScore,
+  type ArchiveMatch,
+  type ArchiveParticipant,
   type Match,
+  type Tournament,
 } from 'livetennisapi';
 import { z } from 'zod';
 
-export const VERSION = '1.2.3';
+export const VERSION = '1.3.0';
 
 type ToolResult = {
   content: { type: 'text'; text: string }[];
@@ -126,6 +130,92 @@ const PriceOut = z.object({
   timestamp: z.string().nullable().describe('When the price was observed.'),
 });
 
+const TournamentOut = z.object({
+  id: z.string().nullable().describe('Stable tournament id — the same id match objects carry as tournament_id.'),
+  name: z.string().nullable().describe('Tournament name.'),
+  tour: z.string().nullable().describe('atp, wta, challenger, itf or juniors.'),
+  surface: z.string().nullable().describe('Court surface: hard, clay or grass.'),
+  indoor: z.boolean().nullable().describe('True when played indoors.'),
+  city: z.string().nullable().describe('Host city, from a curated table — null where not curated.'),
+  country: z.string().nullable().describe('Host country, ISO-3166 alpha-2 — null where not curated.'),
+  category: z
+    .string()
+    .nullable()
+    .describe(
+      'Tournament category (grand_slam, masters_1000, tour_finals, atp_500, atp_250, wta_1000, ' +
+        'wta_500, wta_250, wta_125, challenger, itf, juniors). Set only where the catalogues agree ' +
+        'unambiguously — null otherwise, never derived from the name.',
+    ),
+});
+
+const ArchiveSideOut = z.object({
+  name: z.string().nullable().describe('Player name as the corpus records it.'),
+  country: z.string().nullable().describe('3-letter country code.'),
+  rank: z.number().nullable().describe('Rank AT THE TIME of the match, as published.'),
+  seed: z.number().nullable().describe('Seeding, where seeded.'),
+  player_id: z
+    .number()
+    .nullable()
+    .describe('Corpus person id — pass to search_archive_players results to join bios. NOT a roster player id.'),
+  hand: z.string().nullable().describe('"R" or "L".'),
+  height_cm: z.number().nullable().describe('Height in cm, where recorded.'),
+  age: z.number().nullable().describe('Age at the time of the match.'),
+  entry: z.string().nullable().describe('Draw entry where recorded (WC, Q, LL, …) — null for direct acceptances.'),
+});
+
+const ArchiveMatchOut = z.object({
+  id: z.number().nullable().describe('Archive match id. Pass to get_archive_match for the detail read with stats.'),
+  tour: z.string().nullable().describe('atp or wta — the results archive covers those two tours.'),
+  tournament: z.string().nullable().describe('Tournament name.'),
+  event_date: z
+    .string()
+    .nullable()
+    .describe('The tournament START date — per-match dates do not exist in this era’s records.'),
+  round: z.string().nullable().describe('Round code: F, SF, QF, R16 … Q1-Q4.'),
+  level: z.string().nullable().describe('Source tier code: G, M, A, F, D, C, O, or a futures category code.'),
+  surface: z.string().nullable().describe('Court surface.'),
+  score: z.string().nullable().describe('The final score as published, e.g. "6-4 7-6(5)", "6-3 RET", "W/O".'),
+  outcome: z
+    .string()
+    .nullable()
+    .describe('completed, retired, walkover, default or abandoned — parsed, null when unparseable.'),
+  winner: ArchiveSideOut.describe('The winner — a stored field in the corpus, never an inference.'),
+  loser: ArchiveSideOut.describe('The loser.'),
+});
+
+const ArchiveBioOut = z.object({
+  id: z
+    .number()
+    .nullable()
+    .describe('Corpus person id — the id archive match rows carry as winner/loser player_id. NOT a roster id.'),
+  tour: z.string().nullable().describe('atp or wta.'),
+  name: z.string().nullable().describe('Player name.'),
+  hand: z.string().nullable().describe('"R" or "L".'),
+  dob: z.string().nullable().describe('Date of birth, ISO date.'),
+  country: z.string().nullable().describe('3-letter country code.'),
+  height_cm: z.number().nullable().describe('Height in cm.'),
+  career_high_rank: z.number().nullable().describe('Career-high rank, from the corpus’s own weekly tables.'),
+  career_high_date: z.string().nullable().describe('The earliest week the career-high rank was reached.'),
+});
+
+const H2HMeetingOut = z.object({
+  era: z
+    .string()
+    .nullable()
+    .describe('"archive" (results archive, 1968-2022) or "current" (our own completed matches, 2023 onward).'),
+  date: z.string().nullable().describe('Match date (current era) or tournament start date (archive era).'),
+  tournament: z.string().nullable().describe('Tournament name.'),
+  round: z.string().nullable().describe('Round.'),
+  surface: z.string().nullable().describe('Court surface.'),
+  score: z.string().nullable().describe('Final score (archive rows only — read current rows from get_match).'),
+  outcome: z.string().nullable().describe('completed, retired, walkover, … — exclude non-completed yourself if needed.'),
+  winner: z
+    .number()
+    .nullable()
+    .describe('1 or 2 OF THE REQUEST (player1/player2 as you passed them), not of the underlying match row.'),
+  match_id: z.number().nullable().describe('Our match id (current era rows) — pass to get_match.'),
+});
+
 /** Normalise `undefined` to `null` — the schemas above are nullable, not optional. */
 const n = <T,>(v: T | undefined | null): T | null => (v == null ? null : v);
 
@@ -144,6 +234,63 @@ function matchOut(m: Match): z.infer<typeof MatchOut> {
     winner: n(m.winner),
     win_probability_p1: n(m.score?.win_probability_p1),
   };
+}
+
+function tournamentOut(t: Tournament): z.infer<typeof TournamentOut> {
+  return {
+    id: n(t.id),
+    name: n(t.name),
+    tour: n(t.tour),
+    surface: n(t.surface),
+    indoor: n(t.indoor),
+    city: n(t.city),
+    country: n(t.country),
+    category: n(t.category),
+  };
+}
+
+function archiveSideOut(p: ArchiveParticipant | undefined): z.infer<typeof ArchiveSideOut> {
+  return {
+    name: n(p?.name),
+    country: n(p?.country),
+    rank: n(p?.rank),
+    seed: n(p?.seed),
+    player_id: n(p?.player_id),
+    hand: n(p?.hand),
+    height_cm: n(p?.height_cm),
+    age: n(p?.age),
+    entry: n(p?.entry),
+  };
+}
+
+function archiveMatchOut(m: ArchiveMatch): z.infer<typeof ArchiveMatchOut> {
+  return {
+    id: n(m.id),
+    tour: n(m.tour),
+    tournament: n(m.tournament),
+    event_date: n(m.event_date),
+    round: n(m.round),
+    level: n(m.level),
+    surface: n(m.surface),
+    score: n(m.score),
+    outcome: n(m.outcome),
+    winner: archiveSideOut(m.winner),
+    loser: archiveSideOut(m.loser),
+  };
+}
+
+/** Compact one-line archive-result summary, mirroring `summarise()` for live matches. */
+function summariseArchive(m: ArchiveMatch): string {
+  const w = m.winner?.name ?? '?';
+  const l = m.loser?.name ?? '?';
+  const rank = (p: ArchiveParticipant | undefined) => (p?.rank != null ? ` (rank ${p.rank})` : '');
+  const bits = [
+    `[${m.id}] ${m.event_date ?? '?'} ${m.tournament ?? 'Unknown event'}${m.round ? ` — ${m.round}` : ''}`,
+    `  ${w}${rank(m.winner)} d. ${l}${rank(m.loser)}  ${m.score ?? ''}`.trimEnd(),
+  ];
+  if (m.surface) bits.push(`  Surface: ${m.surface}`);
+  if (m.outcome && m.outcome !== 'completed') bits.push(`  Outcome: ${m.outcome}`);
+  return bits.join('\n');
 }
 
 /** Compact one-line match summary — token-efficient for a model to read. */
@@ -212,8 +359,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           `This data requires the ${err.requiredTier ?? 'a higher'} plan, and the configured ` +
             `API key is on a lower tier. Nothing is wrong with the key — the endpoint is ` +
             `simply not included in the current plan. Upgrade at https://livetennisapi.com/#pricing\n\n` +
-            `Tiers: FREE = live & upcoming matches, scores, players, fixtures · ` +
-            `BASIC = + historical results · ` +
+            `Tiers: FREE = live & upcoming matches, scores, players, fixtures, tournaments · ` +
+            `BASIC = + historical results, the results archive (1968–2022) and head-to-head · ` +
             `PRO = + match events and market prices · ` +
             `ULTRA = + model analysis, win probability and the live WebSocket feed.`,
         );
@@ -230,6 +377,19 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       if (err instanceof RateLimited) {
         const wait = err.retryAfter ? ` Retry in about ${err.retryAfter}s.` : '';
         return fail(`Rate limit reached for this plan.${wait}`);
+      }
+      if (err instanceof BadRequest && err.errorCode === 'ambiguous_name') {
+        // /h2h and /history/archive/career refuse a fragment matching more
+        // than one player — two people summed into one record would be a
+        // wrong answer, not a convenience. Relay the candidates so the model
+        // can disambiguate instead of retrying blind.
+        const candidates = (err.body as { candidates?: unknown } | undefined)?.candidates;
+        const list = Array.isArray(candidates) ? candidates.join(', ') : '';
+        return fail(
+          `That name fragment matches more than one player${list ? `: ${list}` : ''}. ` +
+            'The API refuses to sum two people into one record, so nothing was guessed — ' +
+            'retry with a more specific name (one of the candidates above).',
+        );
       }
       // A genuine fault, unlike everything above. isError exempts it from output
       // validation, so no structured content is required here.
@@ -570,6 +730,83 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
   );
 
   server.registerTool(
+    'search_tournaments',
+    {
+      title: 'Tournament catalogue',
+      description:
+        'Search the tournament catalogue — the stable id space that match objects carry as ' +
+        'tournament_id. Returns surface, indoor, host city/country and category where curated.',
+      inputSchema: {
+        query: z.string().optional().describe('Full or partial tournament name, e.g. "wimbledon". Omit to list all.'),
+        tour: z
+          .enum(['atp', 'wta', 'challenger', 'itf', 'juniors'])
+          .optional()
+          .describe('Restrict to one tour.'),
+        limit: limitField(200, 20, 'tournaments'),
+      },
+      outputSchema: {
+        ok: okField,
+        message: messageField,
+        tournaments: z.array(TournamentOut).optional().describe('Matching tournaments, name order.'),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ query, tour, limit }) =>
+      guard(async () => {
+        const page = await client.listTournaments({ search: query, tour, limit });
+        if (!page.data.length) {
+          return { text: query ? `No tournaments matched "${query}".` : 'No tournaments found.', data: { tournaments: [] } };
+        }
+        return {
+          text: page.data
+            .map(
+              (t) =>
+                `[${t.id}] ${t.name ?? '?'}${t.tour ? ` · ${t.tour}` : ''}` +
+                `${t.surface ? ` · ${t.surface}${t.indoor ? ' (indoor)' : ''}` : ''}` +
+                `${t.city ? ` · ${t.city}${t.country ? `, ${t.country}` : ''}` : ''}` +
+                `${t.category ? ` · ${t.category}` : ''}`,
+            )
+            .join('\n'),
+          data: { tournaments: page.data.map(tournamentOut) },
+        };
+      }),
+  );
+
+  server.registerTool(
+    'get_tournament',
+    {
+      title: 'Tournament detail',
+      description:
+        'One tournament by its stable id — the tournament_id carried on match objects. ' +
+        'Name, tour, surface, indoor, plus host city/country and category where curated.',
+      inputSchema: {
+        tournament_id: z
+          .string()
+          .describe('Stable tournament id, as returned by search_tournaments or carried on a match as tournament_id.'),
+      },
+      outputSchema: {
+        ok: okField,
+        message: messageField,
+        tournament: TournamentOut.optional().describe('The tournament.'),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ tournament_id }) =>
+      guard(async () => {
+        const t = await client.getTournament(tournament_id);
+        if (!t) return { text: 'No data returned for that tournament id.' };
+        const rows = [
+          `${t.name ?? 'Unknown'} [${t.id}]`,
+          t.tour ? `Tour: ${t.tour}` : null,
+          t.surface ? `Surface: ${t.surface}${t.indoor ? ' (indoor)' : ''}` : null,
+          t.city ? `Location: ${t.city}${t.country ? `, ${t.country}` : ''}` : null,
+          t.category ? `Category: ${t.category}` : null,
+        ].filter(Boolean);
+        return { text: rows.join('\n'), data: { tournament: tournamentOut(t) } };
+      }),
+  );
+
+  server.registerTool(
     'get_recent_results',
     {
       title: 'Recent results',
@@ -589,6 +826,356 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         return {
           text: page.data.map(summarise).join('\n\n'),
           data: { matches: page.data.map(matchOut) },
+        };
+      }),
+  );
+
+  server.registerTool(
+    'search_archive_matches',
+    {
+      title: 'Results archive (1968–2022)',
+      description:
+        'Search the results archive — completed-match RESULTS from 1968 through 2022: ATP and WTA, ' +
+        'main draws, qualifying and the ITF/futures tiers. Winner/loser-shaped records with final ' +
+        'score, seeds and ranks AT THE TIME of the match. Use this for historical questions ' +
+        '("Borg\'s Wimbledon finals"); the archive ends 2022-12-31 where our own results ' +
+        '(get_recent_results) begin. Requires the BASIC plan or any History plan.',
+      inputSchema: {
+        player_name: z
+          .string()
+          .min(3)
+          .optional()
+          .describe('Case-insensitive fragment of EITHER player\'s name, min 3 chars, e.g. "borg".'),
+        tour: z.enum(['atp', 'wta']).optional().describe('atp or wta.'),
+        from: z.string().optional().describe('Earliest tournament START date, YYYY-MM-DD.'),
+        to: z.string().optional().describe('Latest tournament START date, YYYY-MM-DD.'),
+        round: z
+          .enum(['F', 'SF', 'QF', 'R16', 'R32', 'R64', 'R128', 'RR', 'BR', 'Q1', 'Q2', 'Q3', 'Q4', 'ER'])
+          .optional()
+          .describe('Round code, e.g. F for finals.'),
+        level: z
+          .string()
+          .optional()
+          .describe('Source tier code: G=grand slam, M=masters, A=tour, F=finals, D=davis cup, C=challenger, O=olympics, or a futures category code (e.g. 15).'),
+        limit: limitField(200, 20, 'results'),
+      },
+      outputSchema: {
+        ok: okField,
+        message: messageField,
+        results: z.array(ArchiveMatchOut).optional().describe('Archive results, newest tournament first.'),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ player_name, tour, from, to, round, level, limit }) =>
+      guard(async () => {
+        const page = await client.listArchiveMatches({ name: player_name, tour, from, to, round, level, limit });
+        if (!page.data.length) {
+          return { text: 'No archive results matched. The results archive covers 1968 through 2022 — for 2023 onward use get_recent_results.', data: { results: [] } };
+        }
+        return {
+          text: page.data.map(summariseArchive).join('\n\n'),
+          data: { results: page.data.map(archiveMatchOut) },
+        };
+      }),
+  );
+
+  server.registerTool(
+    'get_archive_match',
+    {
+      title: 'Archive result detail',
+      description:
+        'One result from the results archive (1968–2022), with per-match serve statistics where ' +
+        'the era recorded them — stats are null for most rows before 1991, honestly, never ' +
+        'synthesised. Requires the BASIC plan or any History plan.',
+      inputSchema: {
+        archive_match_id: z.number().int().describe('Archive match id, as returned by search_archive_matches.'),
+      },
+      outputSchema: {
+        ok: okField,
+        message: messageField,
+        result: ArchiveMatchOut.optional().describe('The archive result.'),
+        stats: z
+          .object({
+            winner: z.record(z.number().nullable()).nullable().describe('Serve stats for the winner, where recorded.'),
+            loser: z.record(z.number().nullable()).nullable().describe('Serve stats for the loser, where recorded.'),
+          })
+          .nullable()
+          .optional()
+          .describe('Per-match serve statistics (aces, double_faults, serve_points, first_in, first_won, second_won, serve_games, bp_saved, bp_faced). Null for most pre-1991 rows.'),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ archive_match_id }) =>
+      guard(async () => {
+        const m = await client.getArchiveMatch(archive_match_id);
+        if (!m) return { text: 'No data returned for that archive match id.' };
+        let out = summariseArchive(m);
+        const data: Record<string, unknown> = { result: archiveMatchOut(m) };
+        if (m.stats) {
+          const line = (label: string, s: Record<string, unknown> | null | undefined) =>
+            s ? `  ${label}: ${Object.entries(s).map(([k, v]) => `${k}=${v ?? '-'}`).join(' · ')}` : null;
+          out += ['\n\nServe statistics:', line('winner', m.stats.winner), line('loser', m.stats.loser)]
+            .filter(Boolean)
+            .join('\n');
+          data.stats = { winner: n(m.stats.winner), loser: n(m.stats.loser) };
+        } else {
+          out += '\n\nNo serve statistics — the corpus records them from 1991 only, and this null is honest.';
+          data.stats = null;
+        }
+        return { text: out, data };
+      }),
+  );
+
+  server.registerTool(
+    'search_archive_players',
+    {
+      title: 'Archive player bios',
+      description:
+        'The people of the results archive (1968–2022): hand, date of birth, country, height, and ' +
+        'career-high rank with the week it was first reached. Their ids are corpus person ids ' +
+        '(the winner/loser player_id on archive results), not roster ids — for current players ' +
+        'use search_players. Requires the BASIC plan or any History plan.',
+      inputSchema: {
+        query: z.string().min(3).describe('Full or partial player name, min 3 chars, e.g. "navratilova".'),
+        tour: z.enum(['atp', 'wta']).optional().describe('atp or wta.'),
+        limit: limitField(200, 10, 'players'),
+      },
+      outputSchema: {
+        ok: okField,
+        message: messageField,
+        players: z.array(ArchiveBioOut).optional().describe('Matching archive people, ordered by name.'),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ query, tour, limit }) =>
+      guard(async () => {
+        const page = await client.listArchivePlayers({ name: query, tour, limit });
+        if (!page.data.length) return { text: `No archive players matched "${query}".`, data: { players: [] } };
+        return {
+          text: page.data
+            .map(
+              (p) =>
+                `[${p.id}] ${p.name ?? '?'}${p.country ? ` (${p.country})` : ''}${p.tour ? ` · ${p.tour}` : ''}` +
+                `${p.hand ? ` · ${p.hand}` : ''}${p.dob ? ` · b. ${p.dob}` : ''}` +
+                `${p.career_high_rank != null ? ` · career high ${p.career_high_rank}${p.career_high_date ? ` (${p.career_high_date})` : ''}` : ''}`,
+            )
+            .join('\n'),
+          data: {
+            players: page.data.map((p) => ({
+              id: n(p.id),
+              tour: n(p.tour),
+              name: n(p.name),
+              hand: n(p.hand),
+              dob: n(p.dob),
+              country: n(p.country),
+              height_cm: n(p.height_cm),
+              career_high_rank: n(p.career_high_rank),
+              career_high_date: n(p.career_high_date),
+            })),
+          },
+        };
+      }),
+  );
+
+  server.registerTool(
+    'get_archive_career',
+    {
+      title: 'Archive career aggregates',
+      description:
+        "One player's whole career over the results archive (1968–2022): W-L record overall and by " +
+        'surface/level/year, titles, and summed serve statistics with honest coverage — the corpus ' +
+        'records serve stats from 1991 only, so matches_with_stats states how many matches the serve ' +
+        'block covers. The name must resolve to one person; an ambiguous fragment returns the ' +
+        'candidate list to choose from. Requires the BASIC plan or any History plan.',
+      inputSchema: {
+        name: z.string().min(3).describe('Player name fragment, min 3 chars — must resolve to exactly one person.'),
+      },
+      outputSchema: {
+        ok: okField,
+        message: messageField,
+        player_name: z.string().nullable().optional().describe('The resolved player.'),
+        span: z
+          .object({
+            first: z.string().nullable().describe('First archive match date.'),
+            last: z.string().nullable().describe('Last archive match date.'),
+          })
+          .optional()
+          .describe('Career span inside the archive.'),
+        record: z
+          .object({
+            wins: z.number().nullable().describe('Career wins.'),
+            losses: z.number().nullable().describe('Career losses.'),
+            titles: z.number().nullable().describe('Finals won (excluding abandoned finals).'),
+            by_surface: z
+              .record(z.object({ wins: z.number().nullable(), losses: z.number().nullable() }))
+              .nullable()
+              .describe('W-L per surface.'),
+            by_level: z
+              .record(z.object({ wins: z.number().nullable(), losses: z.number().nullable() }))
+              .nullable()
+              .describe('W-L per source tier code.'),
+          })
+          .optional()
+          .describe('The W-L record.'),
+        by_year: z
+          .array(z.object({ year: z.number().nullable(), wins: z.number().nullable(), losses: z.number().nullable() }))
+          .optional()
+          .describe('Per-season W-L.'),
+        serve: z
+          .record(z.number().nullable())
+          .nullable()
+          .optional()
+          .describe('Summed serve stats + derived ratios. matches_with_stats states the coverage; ratios are null where the denominator is zero.'),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ name }) =>
+      guard(async () => {
+        const career = await client.getArchiveCareer(name);
+        if (!career) return { text: 'No archive career found for that name.' };
+        const rec = career.record ?? {};
+        const lines = [
+          `${career.player?.name ?? name} — results archive (1968–2022)`,
+          `Record: ${rec.wins ?? 0}-${rec.losses ?? 0}, ${rec.titles ?? 0} title(s)` +
+            `${career.span?.first ? ` · ${career.span.first} → ${career.span.last ?? '?'}` : ''}`,
+        ];
+        if (rec.by_surface && Object.keys(rec.by_surface).length) {
+          lines.push(
+            `By surface: ${Object.entries(rec.by_surface)
+              .map(([s, wl]) => `${s} ${wl?.wins ?? 0}-${wl?.losses ?? 0}`)
+              .join(' · ')}`,
+          );
+        }
+        const serve = career.serve;
+        if (serve?.matches_with_stats) {
+          lines.push(
+            `Serve (over ${serve.matches_with_stats} matches with stats): ` +
+              `${serve.aces ?? 0} aces (${serve.aces_per_match ?? '-'}/match) · ` +
+              `1st in ${serve.first_in_pct ?? '-'} · 1st won ${serve.first_won_pct ?? '-'} · ` +
+              `BP saved ${serve.bp_saved_pct ?? '-'}`,
+          );
+        } else {
+          lines.push('Serve stats: none — the corpus records them from 1991 only.');
+        }
+        return {
+          text: lines.join('\n'),
+          data: {
+            player_name: n(career.player?.name),
+            span: { first: n(career.span?.first), last: n(career.span?.last) },
+            record: {
+              wins: n(rec.wins),
+              losses: n(rec.losses),
+              titles: n(rec.titles),
+              by_surface: n(rec.by_surface as Record<string, { wins: number | null; losses: number | null }> | undefined),
+              by_level: n(rec.by_level as Record<string, { wins: number | null; losses: number | null }> | undefined),
+            },
+            by_year: (career.by_year ?? []).map((y) => ({ year: n(y.year), wins: n(y.wins), losses: n(y.losses) })),
+            serve: n(serve as Record<string, number | null> | undefined),
+          },
+        };
+      }),
+  );
+
+  server.registerTool(
+    'get_h2h',
+    {
+      title: 'Head-to-head',
+      description:
+        'The all-time record between two players, across BOTH halves of the product: the results ' +
+        'archive (1968–2022) plus our own completed matches (2023 onward). Names are the keys — an ' +
+        'ambiguous fragment returns the candidate list to choose from rather than guessing. Totals ' +
+        'count only meetings with a known winner; walkovers and retirements are part of the record ' +
+        'and each meeting carries its outcome. Requires the BASIC plan or any History plan.',
+      inputSchema: {
+        player1: z.string().min(3).describe('First player name (fragment, min 3 chars), e.g. "federer".'),
+        player2: z.string().min(3).describe('Second player name (fragment, min 3 chars), e.g. "nadal".'),
+      },
+      outputSchema: {
+        ok: okField,
+        message: messageField,
+        players: z
+          .object({
+            p1: z.string().nullable().describe('Resolved name for player1.'),
+            p2: z.string().nullable().describe('Resolved name for player2.'),
+          })
+          .nullable()
+          .optional()
+          .describe('The resolved names; null when no player matches the fragments.'),
+        totals: z
+          .object({
+            p1_wins: z.number().nullable().describe('Wins for player1 (of the request).'),
+            p2_wins: z.number().nullable().describe('Wins for player2 (of the request).'),
+            meetings: z.number().nullable().describe('Meetings with a known winner.'),
+            undecided: z.number().nullable().describe('Meetings with no derivable winner — never counted in wins.'),
+          })
+          .optional()
+          .describe('The headline record.'),
+        by_surface: z
+          .record(z.object({ p1: z.number().nullable(), p2: z.number().nullable() }))
+          .optional()
+          .describe('Decided wins per surface; keys are surface names plus "unknown".'),
+        meetings: z.array(H2HMeetingOut).optional().describe('Individual meetings, newest first, capped at 200.'),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ player1, player2 }) =>
+      guard(async () => {
+        const h2h = await client.getH2H(player1, player2);
+        if (!h2h || !h2h.players) {
+          return { text: `No player matched "${player1}" and/or "${player2}" in either era.`, data: { players: null } };
+        }
+        const p1 = h2h.players.p1?.name ?? player1;
+        const p2 = h2h.players.p2?.name ?? player2;
+        const t = h2h.totals ?? {};
+        const lines = [
+          `${p1} vs ${p2}: ${t.p1_wins ?? 0}-${t.p2_wins ?? 0}` +
+            `${t.undecided ? ` (+${t.undecided} undecided)` : ''}`,
+        ];
+        if (h2h.by_surface && Object.keys(h2h.by_surface).length) {
+          lines.push(
+            `By surface: ${Object.entries(h2h.by_surface)
+              .map(([s, wl]) => `${s} ${wl?.p1 ?? 0}-${wl?.p2 ?? 0}`)
+              .join(' · ')}`,
+          );
+        }
+        const meetings = h2h.meetings ?? [];
+        if (meetings.length) {
+          lines.push('', `Meetings (newest first, ${meetings.length}):`);
+          for (const m of meetings.slice(0, 20)) {
+            const who = m.winner === 1 ? p1 : m.winner === 2 ? p2 : '?';
+            lines.push(
+              `  ${m.date ?? '?'} ${m.tournament ?? '?'}${m.round ? ` (${m.round})` : ''} — ` +
+                `${who} won${m.score ? ` ${m.score}` : ''}${m.era === 'archive' ? ' · archive' : ''}` +
+                `${m.outcome && m.outcome !== 'completed' ? ` · ${m.outcome}` : ''}`,
+            );
+          }
+          if (meetings.length > 20) lines.push(`  … ${meetings.length - 20} more in the structured half.`);
+        }
+        return {
+          text: lines.join('\n'),
+          data: {
+            players: { p1: n(h2h.players.p1?.name), p2: n(h2h.players.p2?.name) },
+            totals: {
+              p1_wins: n(t.p1_wins),
+              p2_wins: n(t.p2_wins),
+              meetings: n(t.meetings),
+              undecided: n(t.undecided),
+            },
+            by_surface: Object.fromEntries(
+              Object.entries(h2h.by_surface ?? {}).map(([s, wl]) => [s, { p1: n(wl?.p1), p2: n(wl?.p2) }]),
+            ),
+            meetings: meetings.map((m) => ({
+              era: n(m.era),
+              date: n(m.date),
+              tournament: n(m.tournament),
+              round: n(m.round ?? m.round_code),
+              surface: n(m.surface),
+              score: n(m.score),
+              outcome: n(m.outcome),
+              winner: n(m.winner),
+              match_id: n(m.match_id),
+            })),
+          },
         };
       }),
   );
@@ -861,8 +1448,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         return structured(
           `API is reachable (status: ${health.status}, version: ${health.version}).\n` +
             `The configured key appears to be on the ${tier} plan.\n\n` +
-            'FREE  = live & upcoming matches, scores, players, fixtures\n' +
-            'BASIC = + historical results\n' +
+            'FREE  = live & upcoming matches, scores, players, fixtures, tournaments\n' +
+            'BASIC = + historical results, the results archive (1968–2022), head-to-head\n' +
             'PRO   = + match events and market prices\n' +
             'ULTRA = + model analysis, win probability and the live feed',
           { reachable: true, api_version: n(health.version), tier, has_key: true },
