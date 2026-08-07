@@ -30,9 +30,7 @@ import {
   ListResourcesRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import {
-  APIStatusError,
   BadRequest,
-  DEFAULT_BASE_URL,
   LiveTennisAPI,
   NotFound,
   RateLimited,
@@ -42,7 +40,8 @@ import {
   type ArchiveMatch,
   type ArchiveParticipant,
   type Match,
-  type Tier,
+  type MatchStatisticsSide,
+  type RankingRecord,
   type Tournament,
 } from 'livetennisapi';
 import { z } from 'zod';
@@ -271,23 +270,10 @@ const StatsSideOut = z.object({
     ),
 });
 
-/** Ranking record as the API returns it — shared by both rankings tools. */
-type RankingRecordWire = {
-  player_id?: number | null;
-  player_name?: string | null;
-  system?: string | null;
-  rank?: number | null;
-  points?: number | null;
-  previous_rank?: number | null;
-  rank_movement?: number | null;
-  rating?: number | null;
-  effective_date?: string | null;
-};
-
 /** Normalise `undefined` to `null` — the schemas above are nullable, not optional. */
 const n = <T,>(v: T | undefined | null): T | null => (v == null ? null : v);
 
-function rankingRowOut(r: RankingRecordWire): z.infer<typeof RankingRowOut> {
+function rankingRowOut(r: RankingRecord): z.infer<typeof RankingRowOut> {
   return {
     player_id: n(r.player_id),
     player_name: n(r.player_name),
@@ -302,7 +288,7 @@ function rankingRowOut(r: RankingRecordWire): z.infer<typeof RankingRowOut> {
 }
 
 /** One-line prose for a ranking record — `#3 Player Name · 7,000 pts (prev 4) · eff. 2026-08-03`. */
-function rankingLine(r: RankingRecordWire): string {
+function rankingLine(r: RankingRecord): string {
   const who = r.player_name ?? (r.player_id != null ? `player ${r.player_id}` : '?');
   const bits = [
     r.rank != null ? `#${r.rank}` : r.rating != null ? `UTR ${r.rating}` : '#?',
@@ -426,51 +412,6 @@ function summarise(match: Match): string {
  */
 export function createServer(apiKey: string, baseUrl?: string): McpServer {
   const client = new LiveTennisAPI({ apiKey, baseUrl });
-
-  /**
-   * GET an endpoint the `livetennisapi` client does not cover yet (rankings,
-   * match statistics, charting), against the same base URL and key, throwing
-   * the client's OWN error classes so `guard()` treats both paths identically.
-   * Migrate each call onto the client as it grows the method, then delete this.
-   *
-   * `requiredTier` mirrors what the client does for its endpoints: the API's
-   * 403 body is a bare `upgrade_required`, so the tier named in the message has
-   * to come from knowing which endpoint was called.
-   */
-  async function rawGet(
-    path: string,
-    params: Record<string, unknown>,
-    requiredTier: Tier,
-  ): Promise<Record<string, unknown>> {
-    const url = new URL((baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '') + path);
-    for (const [key, value] of Object.entries(params)) {
-      if (value == null) continue;
-      if (Array.isArray(value)) for (const item of value) url.searchParams.append(key, String(item));
-      else url.searchParams.set(key, String(value));
-    }
-    const res = await fetch(url, { headers: { authorization: `Bearer ${apiKey}` } });
-    let body: unknown;
-    try {
-      body = await res.json();
-    } catch {
-      body = undefined;
-    }
-    if (!res.ok) {
-      const detail = (body as { detail?: string; error?: string } | undefined) ?? {};
-      const message = detail.detail ?? detail.error ?? `HTTP ${res.status}`;
-      const options = { status: res.status, body, url: url.pathname };
-      if (res.status === 400) throw new BadRequest(message, options);
-      if (res.status === 401) throw new Unauthorized(message, options);
-      if (res.status === 403) throw new UpgradeRequired(message, { ...options, requiredTier });
-      if (res.status === 404) throw new NotFound(message, options);
-      if (res.status === 429) {
-        const retryAfter = Number(res.headers.get('retry-after'));
-        throw new RateLimited(message, { ...options, retryAfter: Number.isFinite(retryAfter) ? retryAfter : undefined });
-      }
-      throw new APIStatusError(message, options);
-    }
-    return (body ?? {}) as Record<string, unknown>;
-  }
 
   /** A non-error, no-data result: tier walls, key problems, empty responses. */
   const fail = (message: string): ToolResult => ({
@@ -1523,8 +1464,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     },
     ({ system, as_of, limit }) =>
       guard(async () => {
-        const res = await rawGet('/rankings', { system, as_of, limit }, 'PRO');
-        const rows = (res.data as RankingRecordWire[] | undefined) ?? [];
+        const res = await client.listRankings({ system, as_of, limit });
+        const rows = res.data ?? [];
         if (!rows.length) {
           return {
             text: `No ${system} ranking table for that date — ITF history begins 2026-07-29 and cannot be reconstructed earlier.`,
@@ -1656,10 +1597,9 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     },
     ({ player_ids, as_of, system }) =>
       guard(async () => {
-        const res = await rawGet('/rankings', { player: player_ids, as_of, system }, 'ULTRA');
-        const rows = (res.data as RankingRecordWire[] | undefined) ?? [];
-        const meta = res.meta as { coverage?: Record<string, unknown> } | undefined;
-        const coverage = meta?.coverage ?? null;
+        const res = await client.listRankings({ player: player_ids, as_of, system });
+        const rows = res.data ?? [];
+        const coverage = res.meta?.coverage ?? null;
         if (!rows.length) {
           return {
             text:
@@ -1721,23 +1661,26 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     },
     ({ match_id }) =>
       guard(async () => {
-        const res = await rawGet(`/matches/${match_id}/statistics`, {}, 'ULTRA');
-        type Side = ({ measured?: Record<string, number | null> | null } & Record<string, unknown>) | null | undefined;
-        const shape = (side: Side): z.infer<typeof StatsSideOut> | null => {
+        const res = await client.getMatchStatistics(match_id);
+        const shape = (side: MatchStatisticsSide | null | undefined): z.infer<typeof StatsSideOut> | null => {
           if (!side) return null;
           const { measured, ...derived } = side;
-          return { derived: derived as Record<string, number | null>, measured: measured ?? null };
+          return {
+            derived: derived as Record<string, number | null>,
+            measured: (measured as Record<string, number | null> | undefined) ?? null,
+          };
         };
-        const players = res.players as { p1?: Side; p2?: Side } | null | undefined;
+        const players = res.players;
         const p1 = shape(players?.p1);
         const p2 = shape(players?.p2);
-        const coverage = n(res.coverage as string | undefined);
+        const coverage = n(res.coverage);
+        const freshness = n(res.freshness as Record<string, unknown> | undefined);
         if (!players || (!p1 && !p2)) {
           return {
             text:
               `No statistics held for match ${match_id} (coverage: ${coverage ?? 'none'}). ` +
               'The match exists — holding nothing for it is the honest answer, not an error.',
-            data: { statistics: { coverage, as_of: n(res.as_of as string | undefined), games_counted: null, players: null, freshness: n(res.freshness as Record<string, unknown> | undefined) } },
+            data: { statistics: { coverage, as_of: n(res.as_of), games_counted: null, players: null, freshness } },
           };
         }
         const line = (label: string, s: z.infer<typeof StatsSideOut> | null): string => {
@@ -1759,8 +1702,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             const mm: string[] = [];
             if (m.aces != null) mm.push(`aces ${m.aces}`);
             if (m.double_faults != null) mm.push(`DFs ${m.double_faults}`);
-            if (m.winners != null) mm.push(`winners ${m.winners}`);
-            if (m.unforced_errors != null) mm.push(`UEs ${m.unforced_errors}`);
+            if (m.winners_total != null) mm.push(`winners ${m.winners_total}`);
+            if (m.unforced_errors_total != null) mm.push(`UEs ${m.unforced_errors_total}`);
             if (mm.length) parts.push(`measured: ${mm.join(' · ')}`);
           }
           return `  ${label}: ${parts.join(' · ') || 'no data'}`;
@@ -1779,10 +1722,10 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           data: {
             statistics: {
               coverage,
-              as_of: n(res.as_of as string | undefined),
-              games_counted: n(res.games_counted as number | undefined),
+              as_of: n(res.as_of),
+              games_counted: n(res.games_counted),
               players: { p1, p2 },
-              freshness: n(res.freshness as Record<string, unknown> | undefined),
+              freshness,
             },
           },
         };
@@ -1818,10 +1761,10 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     },
     ({ name, gender }) =>
       guard(async () => {
-        const res = await rawGet('/charting/players', { name, gender }, 'ULTRA');
-        const player = (res.player as Record<string, unknown> | undefined) ?? null;
-        const families = (res.families as Record<string, unknown> | undefined) ?? {};
-        const who = (player?.name as string | undefined) ?? name;
+        const res = await client.getChartingPlayer(name, { gender });
+        const player = res.player ?? null;
+        const families = res.families ?? {};
+        const who = player?.name ?? name;
         return {
           text:
             `${who} — ${res.matches_charted ?? '?'} charted match(es), summed from the Match Charting Project ` +
@@ -1829,8 +1772,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             'The full sums are in the structured content.',
           data: {
             player,
-            matches_charted: n(res.matches_charted as number | undefined),
-            coverage: n(res.coverage as string | undefined),
+            matches_charted: n(res.matches_charted),
+            coverage: n(res.coverage),
             families,
           },
         };
@@ -1861,9 +1804,9 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     },
     ({ charting_match_id }) =>
       guard(async () => {
-        const res = await rawGet(`/charting/matches/${charting_match_id}`, {}, 'ULTRA');
-        const players = (res.players as Record<string, unknown> | undefined) ?? null;
-        const families = (res.families as Record<string, unknown> | undefined) ?? {};
+        const res = await client.getChartingMatch(charting_match_id);
+        const players = res.players ?? null;
+        const families = res.families ?? {};
         const names = players
           ? Object.values(players)
               .map((v) => (typeof v === 'string' ? v : ((v as { name?: string })?.name ?? '?')))
@@ -1874,9 +1817,9 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             `Charted match ${res.charting_match_id ?? charting_match_id}${res.mcp_id ? ` (${res.mcp_id})` : ''}: ${names}.\n` +
             `Stat families: ${Object.keys(families).join(', ') || 'none'}. Full per-set numbers are in the structured content.`,
           data: {
-            charting_match_id: n(res.charting_match_id as number | undefined),
-            mcp_id: n(res.mcp_id as string | undefined),
-            gender: n(res.gender as string | undefined),
+            charting_match_id: n(res.charting_match_id),
+            mcp_id: n(res.mcp_id),
+            gender: n(res.gender),
             players,
             families,
           },
