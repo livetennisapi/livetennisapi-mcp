@@ -236,7 +236,7 @@ The stdio route works too, unchanged: `npx -y livetennisapi-mcp`.
 - **Your key stays local** with the stdio server. It is read from the
   environment by the server process on your machine and sent only to
   `api.livetennisapi.com`.
-- Requires Node 18+.
+- Requires Node 20+.
 
 ## Development
 

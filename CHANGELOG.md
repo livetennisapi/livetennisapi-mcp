@@ -52,7 +52,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   carries the rankings, statistics and charting methods, so every tool goes
   through the official client (no raw HTTP anywhere).
 - Dependencies: `@modelcontextprotocol/sdk` 1.30.0, `express-rate-limit`
-  8.6.1, `@types/node` 26.
+  8.6.1, `@types/node` 26; transitive security fixes via `npm audit fix`
+  (hono, `@hono/node-server`, ip-address, fast-uri).
+- **Node floor raised to 20.** Node 18 has been EOL since 2025-04, and
+  `@hono/node-server` 2.x — the MCP SDK's HTTP-transport dependency, bumped
+  by the security fixes — requires Node >= 20, so ">=18" would be a claim
+  the HTTP transport can no longer honour.
 
 ## [1.3.0] — 2026-08-03
 

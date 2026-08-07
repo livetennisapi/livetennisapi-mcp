@@ -49,7 +49,7 @@
   },
   "compatibility": {
     "runtimes": {
-      "node": ">=18"
+      "node": ">=20"
     }
   }
 }
