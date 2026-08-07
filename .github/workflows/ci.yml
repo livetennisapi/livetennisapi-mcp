@@ -16,7 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ['18', '20', '22']
+        # Node 18 is EOL (2025-04) and @hono/node-server 2.x — the MCP SDK's
+        # HTTP-transport dependency — requires >= 20, so 18 is no longer honest.
+        node: ['20', '22']
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
