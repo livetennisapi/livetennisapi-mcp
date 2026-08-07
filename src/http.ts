@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Streamable-HTTP entry point — a MULTI-TENANT host for the same 12 tools.
+ * Streamable-HTTP entry point — a MULTI-TENANT host for the same tools.
  *
  * Why this file exists at all: directories like Smithery can only introspect a
  * server they can reach over HTTP. A local stdio bundle is opaque to them, so
