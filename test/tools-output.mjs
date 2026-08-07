@@ -82,6 +82,35 @@ const CAREER = {
   by_year: [{ year: 1980, wins: 70, losses: 6 }],
   serve: { matches_with_stats: 0, aces: 0, double_faults: 0, serve_points: 0, first_in: 0, first_won: 0, second_won: 0, serve_games: 0, bp_saved: 0, bp_faced: 0, first_in_pct: null, first_won_pct: null, second_won_pct: null, bp_saved_pct: null, aces_per_match: null },
 };
+const RANKING = {
+  player_id: 1, player_name: 'Player One', system: 'atp', tour: 'atp', rank: 1, points: 9000,
+  previous_rank: 2, rank_movement: null, rating: null, effective_date: '2026-08-03', observed_at: null,
+};
+const STATS_SIDE = {
+  measured: { aces: 7, double_faults: 2, first_serves_in: 30, winners: 12, unforced_errors: 9 },
+  service_games_played: 8, service_games_won: 7, hold_pct: 88,
+  return_games_played: 7, return_games_won: 2, break_pct: 29,
+  break_points_faced: 4, break_points_saved: 3, break_points_saved_pct: 75,
+  break_points_played: 5, break_points_converted: 2, break_points_converted_pct: 40,
+  service_points_played: 50, service_points_won: 35, service_points_won_pct: 70,
+  return_points_played: 48, return_points_won: 20, return_points_won_pct: 42,
+  points_played: 98, points_won: 55,
+};
+const STATISTICS = {
+  match_id: 101, coverage: 'live', as_of: '2026-08-07T00:00:00Z', age_seconds: 4,
+  games_counted: 15, tiebreak_games_excluded: 0, inconsistent_games_excluded: 0, sets_covered: [1, 2],
+  freshness: { derived: { coverage: 'live', age_seconds: 4 }, measured: { coverage: 'live', age_seconds: 20 } },
+  players: { p1: STATS_SIDE, p2: { ...STATS_SIDE, hold_pct: 71 } },
+};
+const CHARTING_PLAYER = {
+  player: { name: 'Old Player', gender: 'men' }, matches_charted: 42, coverage: 'curated',
+  families: { serve_direction: { deuce_wide: 120, deuce_body: 40, deuce_t: 90 } },
+};
+const CHARTING_MATCH = {
+  charting_match_id: 777, mcp_id: '19800623-M-Old_Slam-F-Old_Player-Other_Player', gender: 'M',
+  players: { p1: { name: 'Old Player' }, p2: { name: 'Other Player' } },
+  families: { serve_direction: { p1: [{ row: 'Total', deuce_wide: 12 }] } },
+};
 const H2H = {
   players: { p1: { name: 'Old Player' }, p2: { name: 'Other Player' } },
   totals: { p1_wins: 7, p2_wins: 7, meetings: 14, undecided: 0 },
@@ -103,6 +132,17 @@ const upstream = createServer((req, res) => {
   };
   const path = url.split('?')[0];
   if (path.includes('/health')) return send({ status: 'ok', version: 'v1' });
+  // The rankings/statistics/charting matchers must sit ABOVE the generic
+  // /players and /matches matchers — their paths contain those substrings.
+  if (path.includes('/rankings')) {
+    return send({
+      data: [RANKING],
+      meta: { limit: 20, offset: 0, count: 1, coverage: { as_of: null, players_requested: 1, players_resolved: 1, systems_resolved: ['atp'], oldest_available: { atp: '1973-08-23' } } },
+    });
+  }
+  if (path.includes('/statistics')) return send(STATISTICS);
+  if (path.includes('/charting/players')) return send(CHARTING_PLAYER);
+  if (path.includes('/charting/matches')) return send(CHARTING_MATCH);
   if (path.includes('/events')) return send(page({ timestamp: '2026-07-22T00:00:00Z', type: 'break', player: 1 }));
   if (path.includes('/analysis')) return send(ANALYSIS);
   if (path.includes('/markets') || path.includes('/prices')) return send(MARKET);
@@ -170,6 +210,11 @@ const ARGS = {
   get_h2h: { player1: 'old player', player2: 'other player' },
   get_match_events: { match_id: 101, limit: 2 },
   get_match_odds: { match_id: 101, limit: 2 },
+  get_rankings: { system: 'atp', limit: 2 },
+  get_player_rankings: { player_ids: [1] },
+  get_match_statistics: { match_id: 101 },
+  get_charting_player: { name: 'old player' },
+  get_charting_match: { charting_match_id: 777 },
   get_match_analysis: { match_id: 101 },
   check_api_status: {},
 };
@@ -185,7 +230,7 @@ async function main() {
 
   const list = await rpc({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} });
   const tools = list?.result?.tools ?? [];
-  if (tools.length !== 19) fail(`expected 19 tools, got ${tools.length}`);
+  if (tools.length !== 24) fail(`expected 24 tools, got ${tools.length}`);
 
   // 1. Metadata every tool must carry. These are what a directory scores, and
   //    a missing one is invisible until something else reports a low number.
@@ -247,7 +292,7 @@ async function main() {
        + `this test is not proving much. Unfed: ${noData.join(', ')}. Paths asked: ${[...new Set(asked)].join(' ')}`);
   }
 
-  console.log(`OK - 19 tools · outputSchema + annotations + param descriptions · `
+  console.log(`OK - 24 tools · outputSchema + annotations + param descriptions · `
     + `structuredContent valid on both the no-key and success paths`
     + (noData.length ? ` · stub could not feed: ${noData.join(', ')}` : ''));
 }

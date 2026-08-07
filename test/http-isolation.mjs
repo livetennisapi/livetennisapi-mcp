@@ -112,7 +112,7 @@ async function main() {
   // 2. Tools listable with NO credential — this is exactly what an indexer does,
   //    and the reason for hosting at all.
   const list = await rpc({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} });
-  if (list.json?.result?.tools?.length !== 19) fail(`expected 19 tools unauthenticated, got ${list.json?.result?.tools?.length}`);
+  if (list.json?.result?.tools?.length !== 24) fail(`expected 24 tools unauthenticated, got ${list.json?.result?.tools?.length}`);
 
   // 3. THE ISOLATION CHECK, observed directly. An anonymous tool call must reach
   //    upstream with NO credential. If the operator key appears here, the server
@@ -149,7 +149,7 @@ async function main() {
   // 7. Stateless: no session id, so there is no session map to mix callers up.
   if (a.headers.get('mcp-session-id')) fail('server issued a session id; expected stateless mode');
 
-  console.log('OK - 19 tools unauthenticated · operator key never leaves · caller keys exact · no bleed · stateless');
+  console.log('OK - 24 tools unauthenticated · operator key never leaves · caller keys exact · no bleed · stateless');
 }
 
 main()

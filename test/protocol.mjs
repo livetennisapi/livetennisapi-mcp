@@ -15,7 +15,9 @@ const EXPECTED_TOOLS = [
   'search_tournaments', 'get_tournament',
   'search_archive_matches', 'get_archive_match', 'search_archive_players',
   'get_archive_career', 'get_h2h',
-  'get_match_events', 'get_match_odds', 'get_match_analysis', 'check_api_status',
+  'get_match_events', 'get_match_odds', 'get_rankings',
+  'get_player_rankings', 'get_match_statistics', 'get_charting_player',
+  'get_charting_match', 'get_match_analysis', 'check_api_status',
 ];
 
 const requests = [
