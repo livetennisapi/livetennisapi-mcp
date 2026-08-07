@@ -48,6 +48,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   hosted endpoint's own 60/300 req/min limiter is now described so it cannot
   be misread as an API quota.
 - `glama.json` maintainer is the `livetennisapi` org, not a personal account.
+- `livetennisapi` dependency floor raised to ^1.4.0 — the SDK release that
+  carries the rankings, statistics and charting methods, so every tool goes
+  through the official client (no raw HTTP anywhere).
 - Dependencies: `@modelcontextprotocol/sdk` 1.30.0, `express-rate-limit`
   8.6.1, `@types/node` 26.
 
