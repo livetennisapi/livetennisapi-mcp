@@ -2,7 +2,7 @@
   "name": "livetennisapi-mcp",
   "mcpName": "io.github.livetennisapi/livetennisapi-mcp",
   "version": "1.3.0",
-  "description": "MCP server for the Live Tennis API — give Claude, Cursor and other LLM agents real-time tennis scores, players and fixtures for ATP, WTA, Challenger and ITF. Odds and model win-probability tools require the PRO and ULTRA plans.",
+  "description": "MCP server for the Live Tennis API — give Claude, Cursor and other LLM agents real-time tennis scores, players and fixtures for ATP, WTA, Challenger, ITF and juniors. Odds, rankings, match statistics, charting and model win-probability tools require the PRO and ULTRA plans.",
   "keywords": [
     "mcp",
     "modelcontextprotocol",

@@ -7,8 +7,9 @@
 **MCP server for the [Live Tennis API](https://livetennisapi.com).**
 
 Give Claude, Cursor, Zed or any MCP client live tennis scores, players and
-fixtures — for ATP, WTA, Challenger and ITF. Odds and model win-probability
-tools are included, and require the PRO and ULTRA plans.
+fixtures — for ATP, WTA, Challenger, ITF and juniors. Odds, rankings, match
+statistics, charting and model win-probability tools are included, and require
+the PRO and ULTRA plans.
 
 [![npm](https://img.shields.io/npm/v/livetennisapi-mcp.svg)](https://www.npmjs.com/package/livetennisapi-mcp)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -54,6 +55,8 @@ Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/su
 > *"What are the current odds on match 18953?"*
 > *"What's the all-time head-to-head between Borg and McEnroe?"*
 > *"List Navratilova's Grand Slam finals from the archive."*
+> *"Who was ATP #1 the week Alcaraz first entered the top 10?"*
+> *"How is Sabalenka serving in her live match — aces, hold rate, break points?"*
 
 ## Tools
 
@@ -76,10 +79,15 @@ Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/su
 | `get_h2h` | Cross-era head-to-head — archive + current, one record | BASIC |
 | `get_match_events` | Breaks, games, sets, momentum runs | PRO |
 | `get_match_odds` | Match-winner prices — bid / ask / mid | PRO |
+| `get_rankings` | Full published ranking table per system (ATP, WTA, ITF circuits), any week | PRO |
+| `get_player_rankings` | Point-in-time ranking records for specific players, as of any date | ULTRA |
+| `get_match_statistics` | In-play statistics — aces, serve split, hold/break %, break points | ULTRA |
+| `get_charting_player` | Career shot-level profile from the Match Charting Project | ULTRA |
+| `get_charting_match` | One charted match, every stat family, per-set split | ULTRA |
 | `get_match_analysis` | Model thesis, win probability, key factors | ULTRA |
 | `check_api_status` | Reachability + which plan your key is on | — |
 
-The five BASIC history tools are also unlocked by any History plan, which works
+The six BASIC history tools are also unlocked by any History plan, which works
 on top of a free key. The **results archive (1968–2022)** — ATP and WTA, main
 draws, qualifying and the ITF/futures tiers — ends exactly where our own
 results begin (2023), so `search_archive_matches` answers "Borg's Wimbledon
@@ -109,11 +117,25 @@ so you can diagnose that without guessing.
 | Matches, scores, players, fixtures, tournaments | ✅ | ✅ | ✅ | ✅ |
 | Completed-match listings (results)¹ | — | ✅ | ✅ | ✅ |
 | Results archive (1968–2022) + head-to-head¹ | — | ✅ | ✅ | ✅ |
-| Match events + odds | — | — | ✅ | ✅ |
-| Model analysis + win probability | — | — | — | ✅ |
+| Match events, odds + rankings listing | — | — | ✅ | ✅ |
+| Model analysis, as-of rankings, match statistics + charting | — | — | — | ✅ |
 | | $0 — no card | $9.99/mo | $29.99/mo | $99.99/mo |
 
 ¹ Also unlocked by any History plan, which works on top of a free key.
+
+### Request quotas
+
+| | FREE | BASIC | PRO | ULTRA |
+|---|:--:|:--:|:--:|:--:|
+| Requests per minute | 30 | 60 | 300 | 600 |
+| Requests per day | 100 | 1,000 | 10,000 | 500,000 |
+
+FREE is 100 requests/day, so poll no faster than every 15 minutes on a free
+key; for an always-on dashboard, BASIC is the plan to recommend. Every response
+carries `X-RateLimit-Limit` / `-Remaining` / `-Reset` headers, and the tools
+relay the three distinct 429 shapes honestly — per-minute (retry shortly),
+daily cap (the error names the exact reset instant), and the abuse block
+(don't retry; fix the loop).
 
 ## Hosted endpoint
 
@@ -131,8 +153,10 @@ so directories can introspect the server; calling one needs a key.
 
 It is multi-tenant and holds **no key of its own**: every request builds its own
 server bound to the key that request presented, and there is deliberately no
-fallback to the host's environment. Rate limited per caller — 60 req/min
-anonymous, 300 keyed — with your real quota enforced upstream per key and tier.
+fallback to the host's environment. The endpoint applies its own transport-level
+limit per caller — 60 req/min anonymous, 300 keyed. That limit only protects
+this host process; it is **not** your API quota, which is enforced upstream per
+key and tier (see the quota table above).
 
 Self-hosting it: `deploy/install-http.sh` and `deploy/TUNNEL.md`.
 
@@ -250,8 +274,11 @@ Everything in the Live Tennis API developer surface:
 
 - **API reference** — <https://docs.livetennisapi.com> ([plain-HTML version](https://docs.livetennisapi.com/reference.html), no JavaScript required)
 - **OpenAPI 3.1 specification** — [livetennisapi/openapi](https://github.com/livetennisapi/openapi)
+- **Free API key** — <https://livetennisapi.com/subscribe/free> (no card)
 - **Products** — <https://livetennisapi.com/products>
 - **Website and plans** — <https://livetennisapi.com>
+- **Discord** — <https://discord.gg/f8WUZHgDm6>
+- **GitHub org** — <https://github.com/livetennisapi>
 
 ## Affiliate program
 

@@ -7,10 +7,10 @@ to complete a working setup.
 ## Overview
 
 `livetennisapi-mcp` gives an MCP client live tennis scores, players, fixtures
-and results for ATP, WTA, Challenger and ITF — backed by the
-[Live Tennis API](https://livetennisapi.com). Match events, odds and model
-win-probability tools are included and require paid plans; everything else
-works on the free tier.
+and results for ATP, WTA, Challenger, ITF and juniors — backed by the
+[Live Tennis API](https://livetennisapi.com). Match events, odds, rankings,
+match statistics, charting and model win-probability tools are included and
+require paid plans; everything else works on the free tier.
 
 ## Prerequisites
 
@@ -115,9 +115,21 @@ key then never leaves the user's machine.
 | `search_players` | Find players by name | FREE |
 | `get_player` | Profile, ranking, country, handedness | FREE |
 | `get_fixtures` | Forward schedule | FREE |
+| `search_tournaments` | Tournament catalogue — surface, location, category | FREE |
+| `get_tournament` | One tournament by its stable id | FREE |
 | `get_recent_results` | Completed matches and winners | BASIC |
+| `search_archive_matches` | Results archive (1968–2022) | BASIC |
+| `get_archive_match` | One archive result, with era-recorded serve stats | BASIC |
+| `search_archive_players` | Archive bios — hand, DOB, career-high rank | BASIC |
+| `get_archive_career` | Career W-L, titles and serve aggregates | BASIC |
+| `get_h2h` | Cross-era head-to-head — archive + current | BASIC |
 | `get_match_events` | Breaks, games, sets, momentum runs | PRO |
 | `get_match_odds` | Match-winner prices | PRO |
+| `get_rankings` | Full published ranking table per system | PRO |
+| `get_player_rankings` | Point-in-time player ranking records | ULTRA |
+| `get_match_statistics` | In-play statistics — aces, hold/break %, break points | ULTRA |
+| `get_charting_player` | Career shot-level charting profile | ULTRA |
+| `get_charting_match` | One charted match, every stat family | ULTRA |
 | `get_match_analysis` | Model thesis, win probability | ULTRA |
 | `check_api_status` | Reachability + which plan the key is on | — |
 
