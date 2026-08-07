@@ -14,7 +14,7 @@ require paid plans; everything else works on the free tier.
 
 ## Prerequisites
 
-1. **Node.js >= 18** (check with `node --version`)
+1. **Node.js >= 20** (check with `node --version`)
 2. **A Live Tennis API key.** A free key (no credit card) is available at
    <https://livetennisapi.com/subscribe/free>. Keys look like `twjp_…`.
 
@@ -141,7 +141,7 @@ key then never leaves the user's machine.
   <https://livetennisapi.com/#pricing>.
 - **Tools ask for an API key.** `LIVETENNISAPI_KEY` is missing from the `env`
   block, or the key was pasted with whitespace. Keys start with `twjp_`.
-- **`npx` cannot find the package.** Ensure Node >= 18 and network access to
+- **`npx` cannot find the package.** Ensure Node >= 20 and network access to
   the npm registry; the package name is exactly `livetennisapi-mcp`.
 - **Which plan is my key on?** Call `check_api_status` — it probes upward and
   reports the actual plan.
