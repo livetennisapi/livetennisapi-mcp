@@ -87,7 +87,7 @@ const RANKING = {
   previous_rank: 2, rank_movement: null, rating: null, effective_date: '2026-08-03', observed_at: null,
 };
 const STATS_SIDE = {
-  measured: { aces: 7, double_faults: 2, first_serves_in: 30, winners: 12, unforced_errors: 9 },
+  measured: { aces: 7, double_faults: 2, first_serves_in: 30, winners_total: 12, unforced_errors_total: 9 },
   service_games_played: 8, service_games_won: 7, hold_pct: 88,
   return_games_played: 7, return_games_won: 2, break_pct: 29,
   break_points_faced: 4, break_points_saved: 3, break_points_saved_pct: 75,
