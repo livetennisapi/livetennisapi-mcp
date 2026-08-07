@@ -3,6 +3,54 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-08-07
+
+### Added
+- **Five new read-only tools** (19 → 24), same shape as the rest:
+  - `get_rankings` (PRO) — the FULL published ranking table in rank order for
+    one system (atp, wta, itf_jt, itf_mt, itf_wt), the newest week at or
+    before `as_of`. Rows carry `player_name` as published and a null
+    `player_id` for players outside the roster — no silent holes.
+  - `get_player_rankings` (ULTRA) — point-in-time ranking records for specific
+    players: per system, the newest record in force ON OR BEFORE `as_of`.
+    Systems are never collapsed; UTR is a rating with null rank/points. ITF
+    and UTR history begins 2026-07-29, and the `coverage` field says what
+    resolved.
+  - `get_match_statistics` (ULTRA) — in-play/final statistics in two families
+    kept deliberately separate: DERIVED (rebuilt from the point-by-point
+    record) and MEASURED (counted upstream: aces, double faults, serve split,
+    winners/errors). Absent measured fields are omitted, never zero-filled.
+  - `get_charting_player` / `get_charting_match` (ULTRA) — Match Charting
+    Project data: career shot-level profiles and single charted matches with
+    the per-set split. Curated coverage (11,646 charted matches), not
+    full-slate.
+- **Match objects now pass through** `tour`, `tournament_id`, `round_code`,
+  `event_status` and `withdrew` — settlement logic can branch on fields
+  instead of parsing names, and the prose notes retirements/walkovers.
+- **List filters**: `get_live_matches` / `get_upcoming_matches` /
+  `get_recent_results` take `tour` (atp, wta, challenger, itf, juniors),
+  `player` (ids, max 50), `country` (IOC-style 3-letter) and — where dated —
+  `from`/`to`; `get_fixtures` takes `tour`.
+- **The three 429 shapes are now distinguished** instead of collapsed into
+  "rate limited": the daily cap names the exact `resets_at` instant (it is
+  not midnight UTC), the abuse block (`abuse_throttled`) relays
+  `retry_at_epoch` with do-not-retry advice, and the per-minute limit keeps
+  its Retry-After.
+- `scripts/truthcheck.sh` + a CI step pinning current product facts (quota
+  grid, docs URL, org identity, the resets_at story).
+
+### Changed
+- Quota copy documents the 2026-08-06 grid: FREE 30/min · 100/day, BASIC
+  60/min · 1,000/day, PRO 300/min · 10,000/day, ULTRA 600/min · 500,000/day —
+  with free-key polling guidance (≥15 min).
+- Tour phrasing everywhere: ATP, WTA, Challenger, ITF **and juniors**.
+- README/llms-install tool tables list all 24 tools with tier gates; the
+  hosted endpoint's own 60/300 req/min limiter is now described so it cannot
+  be misread as an API quota.
+- `glama.json` maintainer is the `livetennisapi` org, not a personal account.
+- Dependencies: `@modelcontextprotocol/sdk` 1.30.0, `express-rate-limit`
+  8.6.1, `@types/node` 26.
+
 ## [1.3.0] — 2026-08-03
 
 ### Added
