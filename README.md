@@ -4,6 +4,8 @@
 
 # livetennisapi-mcp
 
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.livetennisapi%2Flivetennisapi-mcp.svg)](https://mcptoplist.com/server/io.github.livetennisapi%2Flivetennisapi-mcp)
+
 **MCP server for the [Live Tennis API](https://livetennisapi.com).**
 
 Give Claude, Cursor, Zed or any MCP client live tennis scores, players and
