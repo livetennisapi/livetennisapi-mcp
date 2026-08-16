@@ -11,6 +11,7 @@ fixtures — for ATP, WTA, Challenger, ITF and juniors. Odds, rankings, match
 statistics, charting and model win-probability tools are included, and require
 the PRO and ULTRA plans.
 
+[![CI](https://github.com/livetennisapi/livetennisapi-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/livetennisapi/livetennisapi-mcp/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/livetennisapi-mcp.svg)](https://www.npmjs.com/package/livetennisapi-mcp)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
