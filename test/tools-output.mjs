@@ -37,6 +37,8 @@ const MATCH = {
   surface: 'hard',
   indoor: false,
   winner: null,
+  event_status: 'Interrupted',
+  event_status_updated_at: '2026-08-19T09:15:00Z',
   players: { p1: { id: 1, name: 'Player One' }, p2: { id: 2, name: 'Player Two' } },
   score: { sets: [1, 0], server: 1, is_tiebreak: false, win_probability_p1: 0.61, games: [[6, 4], [3, 2]] },
 };
