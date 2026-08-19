@@ -114,6 +114,13 @@ const MatchOut = z.object({
       'How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, ' +
         'Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here.',
     ),
+  event_status_updated_at: z
+    .string()
+    .nullable()
+    .describe(
+      'The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). ' +
+        'Null while the status has never changed since the field was introduced — never backfilled.',
+    ),
   withdrew: z
     .number()
     .nullable()
@@ -317,6 +324,9 @@ function matchOut(m: Match): z.infer<typeof MatchOut> {
     serving: n(m.score?.server),
     winner: n(m.winner),
     event_status: n(m.event_status),
+    // Typed in livetennisapi >= 1.5; until this repo's pin moves it is only
+    // reachable through the Extensible index signature, hence the cast.
+    event_status_updated_at: n(m.event_status_updated_at as string | null | undefined),
     withdrew: n(m.withdrew),
     win_probability_p1: n(m.score?.win_probability_p1),
   };
