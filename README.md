@@ -231,6 +231,18 @@ Source: [livetennisapi-codex-plugin](https://github.com/livetennisapi/livetennis
 
 The stdio route works too, unchanged: `npx -y livetennisapi-mcp`.
 
+## Bundled skill: Polymarket / Kalshi tennis trading data
+
+The Claude Code plugin (`.claude-plugin/plugin.json`) also ships the
+`polymarket-tennis` Agent Skill under [`skills/polymarket-tennis/`](skills/polymarket-tennis/).
+It teaches Claude the observe-only
+[polymarket-tennis](https://github.com/livetennisapi/polymarket-tennis) Python
+package (market discovery, market-to-match matching, joined price/live-score
+view), the free-tier budget (30 req/min, 100 requests/day), and the verbatim
+retirement/walkover settlement rules for Polymarket, Polymarket US and Kalshi.
+Canonical copy lives in the polymarket-tennis repo; this one is mirrored for
+plugin installs. No order execution, ever.
+
 ## Notes
 
 - **Read-only.** Every tool is a GET; nothing here can modify anything.
