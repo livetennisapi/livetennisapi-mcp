@@ -18,3 +18,4 @@ glama.json
 server.json
 Dockerfile
 .dockerignore
+skills/

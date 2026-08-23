@@ -9,7 +9,22 @@
   "homepage": "https://livetennisapi.com",
   "repository": "https://github.com/livetennisapi/livetennisapi-mcp",
   "license": "MIT",
-  "keywords": ["tennis", "sports", "scores", "atp", "wta", "live-data", "mcp"],
+  "keywords": [
+    "tennis",
+    "sports",
+    "scores",
+    "atp",
+    "wta",
+    "live-data",
+    "mcp",
+    "polymarket",
+    "kalshi",
+    "prediction-markets",
+    "skills"
+  ],
+  "skills": [
+    "./skills/"
+  ],
   "userConfig": {
     "LIVETENNISAPI_KEY": {
       "title": "Live Tennis API Key",
