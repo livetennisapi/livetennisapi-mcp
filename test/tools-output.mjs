@@ -39,8 +39,22 @@ const MATCH = {
   winner: null,
   event_status: 'Interrupted',
   event_status_updated_at: '2026-08-19T09:15:00Z',
+  has_analysis: true,
+  has_market: false,
   players: { p1: { id: 1, name: 'Player One' }, p2: { id: 2, name: 'Player Two' } },
   score: { sets: [1, 0], server: 1, is_tiebreak: false, win_probability_p1: 0.61, games: [[6, 4], [3, 2]] },
+};
+// A row from a server that predates has_analysis / has_market (2026-09-02):
+// both keys absent. The mapper must pass null through and the summary must
+// not invent a coverage line.
+const OLDER_MATCH = {
+  id: 102,
+  tournament: 'Test Open',
+  round: 'QF',
+  status: 'live',
+  winner: null,
+  players: { p1: { id: 3, name: 'Player Three' }, p2: { id: 4, name: 'Player Four' } },
+  score: { sets: [0, 0], server: 2, is_tiebreak: false, games: [[2, 3]] },
 };
 const PLAYER = {
   id: 1, name: 'Player One', country: 'ESP', ranking: 3, ranking_points: 7000,
@@ -160,7 +174,9 @@ const upstream = createServer((req, res) => {
   if (path.includes('/h2h')) return send(H2H);
   if (path.includes('/tournaments')) return send(path.includes('/tournaments/') ? TOURNAMENT : page(TOURNAMENT));
   if (path.includes('/players')) return send(single ? PLAYER : page(PLAYER));
-  if (path.includes('/matches')) return send(single ? MATCH : page(MATCH));
+  if (path.includes('/matches')) {
+    return send(single ? MATCH : { data: [MATCH, OLDER_MATCH], meta: { limit: 2, offset: 0, count: 2 } });
+  }
   send(page(MATCH));
 });
 
@@ -288,6 +304,26 @@ async function main() {
     // rather than passing as if it had exercised the real path.
     if (sc.ok !== true) noData.push(t.name);
   }
+
+  // 4. Spot-check the match mapper against the stub's known values, so "the
+  //    schema was satisfied" cannot pass on nulls all the way down.
+  //    has_analysis / has_market (added 2026-09-02): present-true and
+  //    present-false reach the caller as booleans plus one summary line each;
+  //    absent (older server) is null with no coverage line invented.
+  const live = (await call('get_live_matches', withKey))?.result?.structuredContent;
+  const m = live?.matches?.[0];
+  if (m?.id !== 101) fail(`expected match id 101, got ${JSON.stringify(m)}`);
+  if (m.has_analysis !== true) fail(`has_analysis not mapped: ${JSON.stringify(m.has_analysis)}`);
+  if (m.has_market !== false) fail(`has_market not mapped: ${JSON.stringify(m.has_market)}`);
+  if (!live.message.includes('Analysis: available')) fail(`summary lacks the analysis line:\n${live.message}`);
+  if (!live.message.includes('Market: none')) fail(`summary lacks the market line:\n${live.message}`);
+  const older = live.matches[1];
+  if (older?.id !== 102) fail(`expected the older-server row second, got ${JSON.stringify(older)}`);
+  if (older.has_analysis !== null) fail(`absent has_analysis should map to null: ${JSON.stringify(older.has_analysis)}`);
+  if (older.has_market !== null) fail(`absent has_market should map to null: ${JSON.stringify(older.has_market)}`);
+  const olderSummary = live.message.slice(live.message.indexOf('[102]'));
+  if (!olderSummary.includes('Player Three')) fail('older row not summarised');
+  if (/Analysis:|Market:/.test(olderSummary)) fail(`summary invented coverage for the older row:\n${olderSummary}`);
 
   if (noData.length > tools.length / 2) {
     fail(`the stub fed only ${tools.length - noData.length}/${tools.length} tools real data — `
