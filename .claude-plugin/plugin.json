@@ -1,7 +1,7 @@
 {
   "name": "livetennisapi",
   "description": "Real-time and historical tennis data for Claude — live scores, match state (server, break-point, retirement/walkover), players, rankings, fixtures, head-to-head and the 1968-2022 results archive across ATP, WTA, Challenger, ITF and juniors. Connects to the Live Tennis API (free tier available, no card); collects no usage telemetry. Privacy: https://livetennisapi.com/privacy",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": {
     "name": "Live Tennis API",
     "email": "hello@livetennisapi.com"

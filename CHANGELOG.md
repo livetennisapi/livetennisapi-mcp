@@ -3,6 +3,22 @@
 All notable changes are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-09-02
+
+### Added
+- **`has_analysis` and `has_market` on every match row** (`get_live_matches`,
+  `get_upcoming_matches`, `get_recent_results`, `get_match`), in parity with
+  `livetennisapi-ai` 1.2.0. The API now answers on every row, every tier
+  (server-side since 2026-09-02), whether a model thesis or profile exists for
+  the match and whether a match-winner market is mapped to it — the same
+  facts `get_match_analysis` and `get_match_odds` report the absence of. An
+  agent filters the slate on them in one call instead of collecting one
+  "no data" result per match. Booleans; `null` only when the server predates
+  the field. The text summary gains one line each, only when the server sent
+  the value (`Analysis: available` / `Market: mapped`, or `none`).
+- `get_match_analysis` and `get_match_odds` descriptions point at the two
+  fields so a model checks the row before spending the call.
+
 ## [1.4.0] — 2026-08-07
 
 ### Added
