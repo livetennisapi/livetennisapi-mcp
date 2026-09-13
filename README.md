@@ -66,7 +66,7 @@ Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/su
 | `get_live_matches` | Matches in progress, with live scores | FREE |
 | `get_upcoming_matches` | Matches starting soon | FREE |
 | `get_match` | Full detail for one match | FREE |
-| `get_match_score` | Current score only — fastest read | FREE |
+| `get_match_score` | Current score only — the smallest payload | FREE |
 | `search_players` | Find players by name | FREE |
 | `get_player` | Profile, ranking, country, handedness | FREE |
 | `get_fixtures` | Forward schedule | FREE |
