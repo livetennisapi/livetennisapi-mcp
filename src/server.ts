@@ -611,7 +611,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       title: 'Live matches',
       description:
         'List tennis matches currently in progress, with live scores. Covers ATP, WTA, ' +
-        'Challenger, ITF and juniors. Use this for "what tennis is on right now".',
+        'Challenger, ITF and juniors. Use this for "what tennis is on right now". ' +
+        'Works on the FREE plan (no card needed).',
       inputSchema: {
         tour: tourField,
         player: playerFilterField,
@@ -640,7 +641,9 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     'get_upcoming_matches',
     {
       title: 'Upcoming matches',
-      description: 'List tennis matches scheduled to start soon, with players and tournament.',
+      description:
+        'List tennis matches scheduled to start soon, with players, tournament and start time. ' +
+        'Use this for "who plays next" or to find a match id before it starts. Works on the FREE plan (no card needed).',
       inputSchema: {
         tour: tourField,
         player: playerFilterField,
@@ -673,7 +676,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       title: 'Match detail',
       description:
         'Full detail for one match by id: players, score, surface, round and status. ' +
-        'Includes market prices on PRO and model analysis on ULTRA.',
+        'Includes market prices on PRO and model analysis on ULTRA.' +
+        ' Works on the FREE plan (no card needed).',
       inputSchema: { match_id: matchIdField },
       outputSchema: {
         ok: okField,
@@ -740,7 +744,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       title: 'Match score',
       description:
         'Current score for one match — the fastest, lowest-latency read. Use this when ' +
-        'you only need the score and already know the match id.',
+        'you only need the score and already know the match id.' +
+        ' Works on the FREE plan (no card needed).',
       inputSchema: { match_id: matchIdField },
       outputSchema: {
         ok: okField,
@@ -790,7 +795,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       title: 'Search players',
       description:
         'Search tennis players by name. Returns id, country, ranking and tour. Use the ' +
-        'returned id with get_player.',
+        'returned id with get_player.' +
+        ' Works on the FREE plan (no card needed).',
       inputSchema: {
         query: z.string().min(1).describe('Full or partial player name, e.g. "alcaraz".'),
         limit: limitField(200, 10, 'players'),
@@ -835,7 +841,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     'get_player',
     {
       title: 'Player profile',
-      description: "One player's profile: ranking, country, handedness, date of birth and cached stats.",
+      description: "One player's profile: ranking, country, handedness, date of birth and cached stats." +
+        ' Works on the FREE plan (no card needed).',
       inputSchema: { player_id: z.number().int().describe('Player id, as returned by search_players.') },
       outputSchema: {
         ok: okField,
@@ -880,7 +887,9 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     'get_fixtures',
     {
       title: 'Fixture schedule',
-      description: 'Upcoming scheduled tennis fixtures, earliest first — the forward schedule.',
+      description:
+        'Upcoming scheduled tennis fixtures, earliest first — the forward schedule, filterable by tour, ' +
+        'player and date. Use this for "what is on this week". Works on the FREE plan (no card needed).',
       inputSchema: { tour: tourField, limit: limitField(200, 20, 'fixtures') },
       outputSchema: {
         ok: okField,
@@ -920,7 +929,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       title: 'Tournament catalogue',
       description:
         'Search the tournament catalogue — the stable id space that match objects carry as ' +
-        'tournament_id. Returns surface, indoor, host city/country and category where curated.',
+        'tournament_id. Returns surface, indoor, host city/country and category where curated.' +
+        ' Works on the FREE plan (no card needed).',
       inputSchema: {
         query: z.string().optional().describe('Full or partial tournament name, e.g. "wimbledon". Omit to list all.'),
         tour: z
@@ -963,7 +973,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       title: 'Tournament detail',
       description:
         'One tournament by its stable id — the tournament_id carried on match objects. ' +
-        'Name, tour, surface, indoor, plus host city/country and category where curated.',
+        'Name, tour, surface, indoor, plus host city/country and category where curated.' +
+        ' Works on the FREE plan (no card needed).',
       inputSchema: {
         tournament_id: z
           .string()
