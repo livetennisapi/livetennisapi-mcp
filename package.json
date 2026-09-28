@@ -29,7 +29,10 @@
     "url": "https://github.com/livetennisapi/livetennisapi-mcp/issues"
   },
   "license": "MIT",
-  "author": "Live Tennis API",
+  "author": {
+    "name": "Synapse Research Ltd",
+    "url": "https://synapsereality.io"
+  },
   "type": "module",
   "bin": {
     "livetennisapi-mcp": "./dist/index.js",
