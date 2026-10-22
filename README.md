@@ -81,6 +81,7 @@ Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/su
 | `get_match_events` | Breaks, games, sets, momentum runs | PRO |
 | `get_match_odds` | Match-winner prices — bid / ask / mid | PRO |
 | `get_rankings` | Full published ranking table per system (ATP, WTA, ITF circuits), any week | PRO |
+| `player_stats` | One player's W/L by surface, level and season, set-based record, recent matches; serve/return sums on ULTRA | PRO |
 | `get_player_rankings` | Point-in-time ranking records for specific players, as of any date | ULTRA |
 | `get_match_statistics` | In-play statistics — aces, serve split, hold/break %, break points | ULTRA |
 | `get_charting_player` | Career shot-level profile from the Match Charting Project | ULTRA |

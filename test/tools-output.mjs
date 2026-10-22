@@ -60,6 +60,29 @@ const PLAYER = {
   id: 1, name: 'Player One', country: 'ESP', ranking: 3, ranking_points: 7000,
   ranking_movement: 'up', hand: 'R', birthday: '2003-05-05', tour: 'ATP',
 };
+const PLAYER_STATS = {
+  player: { id: 1, name: 'Player One' },
+  window: { from: '2025-10-22T00:00:00Z', to: '2026-10-22T00:00:00Z' },
+  filters: { surface: null, level: null, last: 20 },
+  records: {
+    overall: { matches: 10, wins: 7, losses: 3, win_pct: 70.0 },
+    last_12_months: { matches: 10, wins: 7, losses: 3, win_pct: 70.0 },
+    by_surface: { clay: { matches: 4, wins: 3, losses: 1, win_pct: 75.0 } },
+    by_venue: { outdoor: { matches: 10, wins: 7, losses: 3, win_pct: 70.0 } },
+    by_level: { atp: { matches: 10, wins: 7, losses: 3, win_pct: 70.0 } },
+    by_season: { 2026: { matches: 10, wins: 7, losses: 3, win_pct: 70.0 } },
+    sets: { sample: { matches: 9 }, tiebreaks: { played: 0, won: 0, lost: 0, win_pct: null } },
+    withdrawals: { retired: { given: 0, received: 1 } },
+    excluded: { not_singles: 0 },
+    recent: [{
+      match_id: 101, date: '2026-10-20', tournament: 'Test Open', round: 'QF', surface: 'clay',
+      opponent: { id: 2, name: 'Player Two' }, won: true, outcome: 'completed',
+      score: { sets: [2, 1], games: [[6, 3, 6], [4, 6, 2]] },
+    }],
+  },
+  serve_return: { matches: 10, matches_with_stats: 8, serve: { aces: { total: 40, matches: 8, per_match: 5.0 } } },
+  meta: { generated_at: '2026-10-22T00:00:00Z' },
+};
 const FIXTURE = {
   event_date: '2026-07-23T12:00:00Z', tournament: 'Test Open', round: 'SF',
   player1_name: 'Player One', player2_name: 'Player Two',
@@ -157,6 +180,7 @@ const upstream = createServer((req, res) => {
     });
   }
   if (path.includes('/statistics')) return send(STATISTICS);
+  if (/\/players\/\d+\/stats$/.test(path)) return send(PLAYER_STATS);
   if (path.includes('/charting/players')) return send(CHARTING_PLAYER);
   if (path.includes('/charting/matches')) return send(CHARTING_MATCH);
   if (path.includes('/events')) return send(page({ timestamp: '2026-07-22T00:00:00Z', type: 'break', player: 1 }));
@@ -217,6 +241,7 @@ const ARGS = {
   get_match_score: { match_id: 101 },
   search_players: { query: 'player', limit: 2 },
   get_player: { player_id: 1 },
+  player_stats: { player_id: 1, from: '2025-10-22', surface: 'clay', last: 5 },
   get_fixtures: { limit: 2 },
   get_recent_results: { limit: 2 },
   search_tournaments: { query: 'test', limit: 2 },
@@ -248,7 +273,7 @@ async function main() {
 
   const list = await rpc({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} });
   const tools = list?.result?.tools ?? [];
-  if (tools.length !== 24) fail(`expected 24 tools, got ${tools.length}`);
+  if (tools.length !== 25) fail(`expected 25 tools, got ${tools.length}`);
 
   // 1. Metadata every tool must carry. These are what a directory scores, and
   //    a missing one is invisible until something else reports a low number.
@@ -325,12 +350,23 @@ async function main() {
   if (!olderSummary.includes('Player Three')) fail('older row not summarised');
   if (/Analysis:|Market:/.test(olderSummary)) fail(`summary invented coverage for the older row:\n${olderSummary}`);
 
+  // player_stats: the path and query reach upstream, and the score is turned to the player.
+  const ps = (await call('player_stats', withKey))?.result?.structuredContent;
+  if (ps?.ok !== true) fail(`player_stats did not succeed: ${JSON.stringify(ps)}`);
+  if (ps.overall?.win_pct !== 70) fail(`player_stats overall not mapped: ${JSON.stringify(ps.overall)}`);
+  if (ps.recent?.[0]?.score !== '6-4 3-6 6-2') fail(`player_stats score not formatted: ${JSON.stringify(ps.recent)}`);
+  if (ps.serve_return?.matches_with_stats !== 8) fail('player_stats serve_return not passed through');
+  const psAsked = asked.find((u) => u.startsWith('/players/1/stats'));
+  if (!psAsked || !psAsked.includes('surface=clay') || !psAsked.includes('last=5') || !psAsked.includes('from=2025-10-22')) {
+    fail(`player_stats asked upstream for ${psAsked}`);
+  }
+
   if (noData.length > tools.length / 2) {
     fail(`the stub fed only ${tools.length - noData.length}/${tools.length} tools real data — `
        + `this test is not proving much. Unfed: ${noData.join(', ')}. Paths asked: ${[...new Set(asked)].join(' ')}`);
   }
 
-  console.log(`OK - 24 tools · outputSchema + annotations + param descriptions · `
+  console.log(`OK - 25 tools · outputSchema + annotations + param descriptions · `
     + `structuredContent valid on both the no-key and success paths`
     + (noData.length ? ` · stub could not feed: ${noData.join(', ')}` : ''));
 }

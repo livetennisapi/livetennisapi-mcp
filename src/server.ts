@@ -487,7 +487,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             `simply not included in the current plan. Upgrade at https://livetennisapi.com/#pricing\n\n` +
             `Tiers: FREE = live & upcoming matches, scores, players, fixtures, tournaments · ` +
             `BASIC = + historical results, the results archive (1968–2022) and head-to-head · ` +
-            `PRO = + match events, market prices and the rankings listing · ` +
+            `PRO = + match events, market prices, the rankings listing and player records · ` +
             `ULTRA = + model analysis, win probability, per-player as-of rankings, in-play statistics, ` +
             `shot-level charting and the live WebSocket feed.`,
         );
@@ -1526,6 +1526,206 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             `${system} rankings${week ? ` — week of ${week}` : ''}${as_of ? ` (as of ${as_of})` : ''}:\n` +
             rows.map(rankingLine).join('\n'),
           data: { rankings: rows.map(rankingRowOut) },
+        };
+      }),
+  );
+
+  // GET /players/{playerId}/stats (2026-10-22). The published SDK this server
+  // depends on predates `getPlayerStats()`, so until the dependency moves this
+  // goes through the client's own request path. That keeps the retries and the
+  // typed errors (a 403 names PRO) every other tool gets.
+  type PlayerStatsBody = {
+    player?: { id?: number; name?: string };
+    window?: { from?: string; to?: string };
+    filters?: { surface?: string | null; level?: string | null; last?: number };
+    records?: Record<string, unknown> & {
+      overall?: WinLoss;
+      last_12_months?: WinLoss;
+      by_surface?: Record<string, WinLoss>;
+      by_level?: Record<string, WinLoss>;
+      sets?: Record<string, { played?: number; matches?: number; won?: number; lost?: number; win_pct?: number | null } | unknown>;
+      recent?: Array<{
+        match_id?: number;
+        date?: string | null;
+        tournament?: string | null;
+        round?: string | null;
+        surface?: string | null;
+        opponent?: { id?: number; name?: string | null };
+        won?: boolean;
+        outcome?: string;
+        score?: { sets?: Array<number | null>; games?: number[][] } | null;
+      }>;
+    };
+    serve_return?: Record<string, unknown> & { matches?: number; matches_with_stats?: number };
+  };
+  type WinLoss = { matches?: number; wins?: number; losses?: number; win_pct?: number | null };
+  const fetchPlayerStats = (
+    playerId: number,
+    params: Record<string, string | number | undefined>,
+  ): Promise<PlayerStatsBody> => {
+    const c = client as unknown as {
+      getPlayerStats?: (id: number, p: Record<string, unknown>) => Promise<PlayerStatsBody>;
+      request: (path: string, p: Record<string, unknown>, tier?: string) => Promise<PlayerStatsBody>;
+    };
+    if (typeof c.getPlayerStats === 'function') return c.getPlayerStats(playerId, params);
+    return c.request(`/players/${playerId}/stats`, params, 'PRO');
+  };
+
+  const WinLossOut = z.object({
+    matches: z.number().nullable().describe('Matches in the sample.'),
+    wins: z.number().nullable().describe('Wins.'),
+    losses: z.number().nullable().describe('Losses.'),
+    win_pct: z.number().nullable().describe('Win percentage, one decimal; null (never 0) on an empty sample.'),
+  });
+  const winLossOut = (wl: WinLoss | undefined) =>
+    wl ? { matches: n(wl.matches), wins: n(wl.wins), losses: n(wl.losses), win_pct: n(wl.win_pct) } : null;
+  const winLossLine = (wl: WinLoss | undefined) =>
+    wl && wl.matches ? `${wl.wins ?? 0}-${wl.losses ?? 0}${wl.win_pct != null ? ` (${wl.win_pct}%)` : ''}` : 'no matches';
+
+  server.registerTool(
+    'player_stats',
+    {
+      title: 'Player record and splits',
+      description:
+        "One player's record over our own completed singles matches (2023 onward), default the last 365 " +
+        'days: W/L overall, last 12 months and by surface, venue, level and season; tiebreaks, deciding ' +
+        'sets, record after winning or losing the first set, comebacks; withdrawals; and the last N ' +
+        'matches. Every count carries its sample size and a percentage is null, never 0, on an empty ' +
+        'sample. On ULTRA it adds serve_return: measured serve and return statistics summed over the ' +
+        'window. Singles only — a doubles-team id is refused. For 1968–2022 use get_archive_career. ' +
+        'Requires the PRO plan (serve_return requires ULTRA).',
+      inputSchema: {
+        player_id: z.number().int().describe('Player id, as returned by search_players.'),
+        from: z.string().optional().describe('Window start: YYYY-MM-DD (start of that day) or a UTC ISO-8601 instant. Default to minus 365 days.'),
+        to: z.string().optional().describe('Window end: YYYY-MM-DD (the whole of that day) or a UTC ISO-8601 instant. Default now.'),
+        surface: z
+          .enum(['hard', 'clay', 'grass', 'indoor'])
+          .optional()
+          .describe('hard, clay or grass read the match surface; indoor keeps matches stated indoor, on any surface.'),
+        level: z
+          .enum(['atp', 'wta', 'challenger', 'itf', 'juniors'])
+          .optional()
+          .describe('The match tour. A match with no stated tour matches no level.'),
+        last: z.number().int().min(1).max(50).optional().describe('How many recent matches to list, newest first (1-50, default 20).'),
+      },
+      outputSchema: {
+        ok: okField,
+        message: messageField,
+        player: z.object({ id: z.number().nullable(), name: z.string().nullable() }).optional().describe('The player.'),
+        window: z
+          .object({ from: z.string().nullable(), to: z.string().nullable() })
+          .optional()
+          .describe('The window applied, UTC.'),
+        overall: WinLossOut.nullable().optional().describe('W/L over the window.'),
+        last_12_months: WinLossOut.nullable().optional().describe('W/L over the 12 months ending at the window end.'),
+        by_surface: z.record(WinLossOut).nullable().optional().describe('W/L keyed hard, clay, grass, unknown.'),
+        by_venue: z.record(WinLossOut).nullable().optional().describe('W/L keyed indoor, outdoor, unknown.'),
+        by_level: z.record(WinLossOut).nullable().optional().describe('W/L keyed by match tour, or unknown.'),
+        by_season: z.record(WinLossOut).nullable().optional().describe('W/L keyed by UTC calendar year.'),
+        sets: z
+          .record(z.unknown())
+          .nullable()
+          .optional()
+          .describe('Set-based record: sample, tiebreaks, deciding_sets, after_winning_first_set, after_losing_first_set, comebacks, sets.'),
+        withdrawals: z
+          .record(z.unknown())
+          .nullable()
+          .optional()
+          .describe('Retired / walkover / default, each as given (this player) and received (the opponent).'),
+        recent: z
+          .array(
+            z.object({
+              match_id: z.number().nullable().describe('Match id. Pass to get_match.'),
+              date: z.string().nullable().describe('Match date.'),
+              tournament: z.string().nullable().describe('Event name.'),
+              round: z.string().nullable().describe('Round.'),
+              surface: z.string().nullable().describe('Court surface.'),
+              opponent: z.string().nullable().describe('Opponent name.'),
+              opponent_id: z.number().nullable().describe('Opponent player id.'),
+              won: z.boolean().nullable().describe('True when this player won.'),
+              outcome: z.string().nullable().describe('completed, retired, walkover or default.'),
+              score: z.string().nullable().describe('Final score from this player\'s side, e.g. "6-4 3-6 6-2".'),
+            }),
+          )
+          .optional()
+          .describe('The last N matches, newest first.'),
+        serve_return: z
+          .record(z.unknown())
+          .nullable()
+          .optional()
+          .describe('ULTRA only, null below: summed serve and return statistics, each ratio as numerator/denominator/pct with its match count.'),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ player_id, from, to, surface, level, last }) =>
+      guard(async () => {
+        let body: PlayerStatsBody;
+        try {
+          body = await fetchPlayerStats(player_id, { from, to, surface, level, last });
+        } catch (err) {
+          if (err instanceof BadRequest && err.errorCode === 'doubles_not_supported') {
+            return { text: 'That id is a doubles team. Player stats cover singles only — query each member player id instead.' };
+          }
+          throw err;
+        }
+        if (!body || !body.records) return { text: 'No record returned for that player id.' };
+        const r = body.records;
+        const recent = (r.recent ?? []).map((m) => {
+          const g = m.score?.games;
+          const score =
+            g && g.length === 2 ? (g[0] ?? []).map((v, i) => `${v}-${g[1]?.[i] ?? '?'}`).join(' ') : null;
+          return {
+            match_id: n(m.match_id),
+            date: n(m.date),
+            tournament: n(m.tournament),
+            round: n(m.round),
+            surface: n(m.surface),
+            opponent: n(m.opponent?.name),
+            opponent_id: n(m.opponent?.id),
+            won: n(m.won),
+            outcome: n(m.outcome),
+            score,
+          };
+        });
+        const lines = [
+          `${body.player?.name ?? 'Player'} [${body.player?.id ?? player_id}] — ` +
+            `${body.window?.from ?? '?'} → ${body.window?.to ?? '?'}`,
+          `Overall: ${winLossLine(r.overall)} · last 12 months: ${winLossLine(r.last_12_months)}`,
+        ];
+        if (r.by_surface && Object.keys(r.by_surface).length) {
+          lines.push(`By surface: ${Object.entries(r.by_surface).map(([s, wl]) => `${s} ${winLossLine(wl)}`).join(' · ')}`);
+        }
+        if (recent.length) {
+          lines.push(
+            `Recent (${recent.length}):`,
+            ...recent.map(
+              (m) =>
+                `  ${m.date ?? '?'} ${m.won ? 'W' : 'L'} vs ${m.opponent ?? '?'}` +
+                `${m.score ? ` ${m.score}` : ''}${m.outcome && m.outcome !== 'completed' ? ` (${m.outcome})` : ''}` +
+                `${m.tournament ? ` — ${m.tournament}` : ''}`,
+            ),
+          );
+        }
+        const sr = body.serve_return;
+        if (sr) {
+          lines.push(`Serve/return: summed over ${sr.matches_with_stats ?? 0} of ${sr.matches ?? 0} matches with statistics.`);
+        }
+        return {
+          text: lines.join('\n'),
+          data: {
+            player: { id: n(body.player?.id), name: n(body.player?.name) },
+            window: { from: n(body.window?.from), to: n(body.window?.to) },
+            overall: winLossOut(r.overall),
+            last_12_months: winLossOut(r.last_12_months),
+            by_surface: n(r.by_surface as Record<string, WinLoss> | undefined),
+            by_venue: n(r.by_venue as Record<string, WinLoss> | undefined),
+            by_level: n(r.by_level as Record<string, WinLoss> | undefined),
+            by_season: n(r.by_season as Record<string, WinLoss> | undefined),
+            sets: n(r.sets as Record<string, unknown> | undefined),
+            withdrawals: n(r.withdrawals as Record<string, unknown> | undefined),
+            recent,
+            serve_return: n(sr),
+          },
         };
       }),
   );

@@ -126,6 +126,7 @@ key then never leaves the user's machine.
 | `get_match_events` | Breaks, games, sets, momentum runs | PRO |
 | `get_match_odds` | Match-winner prices | PRO |
 | `get_rankings` | Full published ranking table per system | PRO |
+| `player_stats` | W/L splits, set-based record, recent matches (serve/return on ULTRA) | PRO |
 | `get_player_rankings` | Point-in-time player ranking records | ULTRA |
 | `get_match_statistics` | In-play statistics — aces, hold/break %, break points | ULTRA |
 | `get_charting_player` | Career shot-level charting profile | ULTRA |
