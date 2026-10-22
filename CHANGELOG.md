@@ -5,6 +5,17 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-22
+
+### Changed
+- `player_stats` now calls `getPlayerStats()` from livetennisapi 1.10.0, the new
+  minimum. The temporary fallback to the client's request path is gone.
+
+### Security
+- `@modelcontextprotocol/sdk` raised to ^1.32.1, which clears the open high
+  advisory on 1.31.x and the moderate hono advisory under it.
+
+
 ### Added
 - **`player_stats` (PRO), one new read-only tool** (24 → 25). It reads
   `GET /players/{playerId}/stats` with `player_id`, `from`, `to`, `surface`,

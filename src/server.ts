@@ -46,7 +46,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-export const VERSION = '1.5.0';
+export const VERSION = '1.6.0';
 
 type ToolResult = {
   content: { type: 'text'; text: string }[];
@@ -1535,10 +1535,9 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       }),
   );
 
-  // GET /players/{playerId}/stats (2026-10-22). The published SDK this server
-  // depends on predates `getPlayerStats()`, so until the dependency moves this
-  // goes through the client's own request path. That keeps the retries and the
-  // typed errors (a 403 names PRO) every other tool gets.
+  // GET /players/{playerId}/stats (2026-10-22), through the SDK's getPlayerStats
+  // (livetennisapi 1.10.0), so it keeps the retries and the typed errors (a 403
+  // names PRO) every other tool gets.
   type PlayerStatsBody = {
     player?: { id?: number; name?: string };
     window?: { from?: string; to?: string };
@@ -1568,12 +1567,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     playerId: number,
     params: Record<string, string | number | undefined>,
   ): Promise<PlayerStatsBody> => {
-    const c = client as unknown as {
-      getPlayerStats?: (id: number, p: Record<string, unknown>) => Promise<PlayerStatsBody>;
-      request: (path: string, p: Record<string, unknown>, tier?: string) => Promise<PlayerStatsBody>;
-    };
-    if (typeof c.getPlayerStats === 'function') return c.getPlayerStats(playerId, params);
-    return c.request(`/players/${playerId}/stats`, params, 'PRO');
+    return client.getPlayerStats(playerId, params as Parameters<typeof client.getPlayerStats>[1]) as unknown as Promise<PlayerStatsBody>;
   };
 
   const WinLossOut = z.object({
