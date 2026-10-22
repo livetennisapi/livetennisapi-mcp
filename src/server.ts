@@ -539,6 +539,11 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             'retry with a more specific name (one of the candidates above).',
         );
       }
+      if (err instanceof BadRequest && err.errorCode === 'doubles_not_supported') {
+        // /players/{id}/stats refuses a doubles-team id. Like ambiguous_name it
+        // is a refusal with a remedy, so it goes out as ok:false, not as data.
+        return fail('That id is a doubles team. Player stats cover singles only — query each member player id instead.');
+      }
       // A genuine fault, unlike everything above. isError exempts it from output
       // validation, so no structured content is required here.
       return {
@@ -1550,10 +1555,10 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         tournament?: string | null;
         round?: string | null;
         surface?: string | null;
-        opponent?: { id?: number; name?: string | null };
+        opponent?: { id?: number; name?: string | null } | null;
         won?: boolean;
         outcome?: string;
-        score?: { sets?: Array<number | null>; games?: number[][] } | null;
+        score?: { sets?: Array<number | null>; games?: Array<Array<number | null>> } | null;
       }>;
     };
     serve_return?: Record<string, unknown> & { matches?: number; matches_with_stats?: number };
@@ -1659,21 +1664,13 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     },
     ({ player_id, from, to, surface, level, last }) =>
       guard(async () => {
-        let body: PlayerStatsBody;
-        try {
-          body = await fetchPlayerStats(player_id, { from, to, surface, level, last });
-        } catch (err) {
-          if (err instanceof BadRequest && err.errorCode === 'doubles_not_supported') {
-            return { text: 'That id is a doubles team. Player stats cover singles only — query each member player id instead.' };
-          }
-          throw err;
-        }
+        const body = await fetchPlayerStats(player_id, { from, to, surface, level, last });
         if (!body || !body.records) return { text: 'No record returned for that player id.' };
         const r = body.records;
         const recent = (r.recent ?? []).map((m) => {
           const g = m.score?.games;
           const score =
-            g && g.length === 2 ? (g[0] ?? []).map((v, i) => `${v}-${g[1]?.[i] ?? '?'}`).join(' ') : null;
+            g && g.length === 2 ? (g[0] ?? []).map((v, i) => `${v ?? '?'}-${g[1]?.[i] ?? '?'}`).join(' ') : null;
           return {
             match_id: n(m.match_id),
             date: n(m.date),

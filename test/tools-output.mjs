@@ -78,6 +78,10 @@ const PLAYER_STATS = {
       match_id: 101, date: '2026-10-20', tournament: 'Test Open', round: 'QF', surface: 'clay',
       opponent: { id: 2, name: 'Player Two' }, won: true, outcome: 'completed',
       score: { sets: [2, 1], games: [[6, 3, 6], [4, 6, 2]] },
+    }, {
+      // The API sends opponent null when the match row holds no opponent id.
+      match_id: 100, date: '2026-10-18', tournament: 'Test Open', round: 'R16', surface: 'clay',
+      opponent: null, won: true, outcome: 'walkover', score: null,
     }],
   },
   serve_return: { matches: 10, matches_with_stats: 8, serve: { aces: { total: 40, matches: 8, per_match: 5.0 } } },
@@ -180,6 +184,11 @@ const upstream = createServer((req, res) => {
     });
   }
   if (path.includes('/statistics')) return send(STATISTICS);
+  if (path === '/players/999/stats') {
+    // A doubles-team id: the API refuses it with 400 doubles_not_supported.
+    res.writeHead(400, { 'content-type': 'application/json' });
+    return res.end(JSON.stringify({ error: 'doubles_not_supported', detail: 'this id is a doubles team' }));
+  }
   if (/\/players\/\d+\/stats$/.test(path)) return send(PLAYER_STATS);
   if (path.includes('/charting/players')) return send(CHARTING_PLAYER);
   if (path.includes('/charting/matches')) return send(CHARTING_MATCH);
@@ -359,6 +368,21 @@ async function main() {
   const psAsked = asked.find((u) => u.startsWith('/players/1/stats'));
   if (!psAsked || !psAsked.includes('surface=clay') || !psAsked.includes('last=5') || !psAsked.includes('from=2025-10-22')) {
     fail(`player_stats asked upstream for ${psAsked}`);
+  }
+  const nullOpp = ps.recent?.[1];
+  if (nullOpp?.match_id !== 100 || nullOpp.opponent !== null || nullOpp.opponent_id !== null) {
+    fail(`player_stats null opponent not mapped to nulls: ${JSON.stringify(nullOpp)}`);
+  }
+
+  // player_stats on a doubles-team id: a refusal with a remedy, so ok:false.
+  const dbl = await rpc(
+    { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'player_stats', arguments: { player_id: 999 } } },
+    withKey,
+  );
+  if (dbl?.error) fail(`player_stats (doubles id) returned a JSON-RPC error: ${JSON.stringify(dbl.error)}`);
+  const dblSc = dbl?.result?.structuredContent;
+  if (dblSc?.ok !== false || !/doubles team/.test(dblSc.message ?? '')) {
+    fail(`player_stats (doubles id) should be ok:false with the remedy: ${JSON.stringify(dblSc)}`);
   }
 
   if (noData.length > tools.length / 2) {

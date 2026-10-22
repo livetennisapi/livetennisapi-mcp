@@ -13,7 +13,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   surface, venue, level and season. It also returns the set-based record,
   withdrawals and the last N matches, with the score from the player's side.
   On ULTRA it passes `serve_return` through, the summed serve and return
-  statistics. A doubles-team id gets a plain message instead of an error.
+  statistics. A doubles-team id answers `ok: false` with the remedy, as an
+  ambiguous name does. A recent match with no opponent maps to null fields.
 - The tier-wall message names player records under PRO.
 
 ## [1.5.0] — 2026-09-02
