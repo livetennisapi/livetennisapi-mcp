@@ -5,6 +5,17 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-10-22
+
+### Changed
+- The 24 tools it shares with livetennisapi-ai now carry the same descriptions
+  as livetennisapi-ai 1.2.1, word for word.
+
+### Fixed
+- `get_fixtures` no longer claims player and date filters. The tool takes `tour`
+  and `limit` only.
+- `player_stats` description rewritten in plain sentences.
+
 ## [1.6.0] - 2026-10-22
 
 ### Changed

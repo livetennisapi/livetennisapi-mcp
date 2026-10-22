@@ -46,7 +46,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-export const VERSION = '1.6.0';
+export const VERSION = '1.6.1';
 
 type ToolResult = {
   content: { type: 'text'; text: string }[];
@@ -748,9 +748,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Match score',
       description:
-        'Current score for one match — the fastest, lowest-latency read. Use this when ' +
-        'you only need the score and already know the match id.' +
-        ' Works on the FREE plan (no card needed).',
+        "Current score for one match. This is the fastest read, with the lowest latency. Use it when you only need the score and already know the match id. Works on the FREE plan (no card needed).",
       inputSchema: { match_id: matchIdField },
       outputSchema: {
         ok: okField,
@@ -893,8 +891,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Fixture schedule',
       description:
-        'Upcoming scheduled tennis fixtures, earliest first — the forward schedule, filterable by tour, ' +
-        'player and date. Use this for "what is on this week". Works on the FREE plan (no card needed).',
+        "Upcoming scheduled tennis fixtures, earliest first. This is the forward schedule, filterable by tour. Use this for \"what is on this week\". Works on the FREE plan (no card needed).",
       inputSchema: { tour: tourField, limit: limitField(200, 20, 'fixtures') },
       outputSchema: {
         ok: okField,
@@ -933,9 +930,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Tournament catalogue',
       description:
-        'Search the tournament catalogue — the stable id space that match objects carry as ' +
-        'tournament_id. Returns surface, indoor, host city/country and category where curated.' +
-        ' Works on the FREE plan (no card needed).',
+        "Search the tournament catalogue. Its ids are the tournament_id that match objects carry. Returns surface, indoor, host city/country and category where curated. Works on the FREE plan (no card needed).",
       inputSchema: {
         query: z.string().optional().describe('Full or partial tournament name, e.g. "wimbledon". Omit to list all.'),
         tour: z
@@ -977,9 +972,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Tournament detail',
       description:
-        'One tournament by its stable id — the tournament_id carried on match objects. ' +
-        'Name, tour, surface, indoor, plus host city/country and category where curated.' +
-        ' Works on the FREE plan (no card needed).',
+        "One tournament by its stable id, the tournament_id carried on match objects. Name, tour, surface, indoor, plus host city/country and category where curated. Works on the FREE plan (no card needed).",
       inputSchema: {
         tournament_id: z
           .string()
@@ -1045,11 +1038,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Results archive (1968–2022)',
       description:
-        'Search the results archive — completed-match RESULTS from 1968 through 2022: ATP and WTA, ' +
-        'main draws, qualifying and the ITF/futures tiers. Winner/loser-shaped records with final ' +
-        'score, seeds and ranks AT THE TIME of the match. Use this for historical questions ' +
-        '("Borg\'s Wimbledon finals"); the archive ends 2022-12-31 where our own results ' +
-        '(get_recent_results) begin. Requires the BASIC plan or any History plan.',
+        "Search the results archive: completed-match RESULTS from 1968 through 2022. ATP and WTA, main draws, qualifying and the ITF/futures tiers. Each record has winner and loser, final score, and seeds and ranks AT THE TIME of the match. Use this for historical questions (\"Borg's Wimbledon finals\"). The archive ends 2022-12-31, where our own results (get_recent_results) begin. Requires the BASIC plan or any History plan.",
       inputSchema: {
         player_name: z
           .string()
@@ -1094,9 +1083,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Archive result detail',
       description:
-        'One result from the results archive (1968–2022), with per-match serve statistics where ' +
-        'the era recorded them — stats are null for most rows before 1991, honestly, never ' +
-        'synthesised. Requires the BASIC plan or any History plan.',
+        "One result from the results archive (1968 to 2022), with per-match serve statistics where the era recorded them. Stats are null for most rows before 1991, never synthesised. Requires the BASIC plan or any History plan.",
       inputSchema: {
         archive_match_id: z.number().int().describe('Archive match id, as returned by search_archive_matches.'),
       },
@@ -1141,10 +1128,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Archive player bios',
       description:
-        'The people of the results archive (1968–2022): hand, date of birth, country, height, and ' +
-        'career-high rank with the week it was first reached. Their ids are corpus person ids ' +
-        '(the winner/loser player_id on archive results), not roster ids — for current players ' +
-        'use search_players. Requires the BASIC plan or any History plan.',
+        "The people of the results archive (1968 to 2022): hand, date of birth, country, height, and career-high rank with the week it was first reached. Their ids are corpus person ids (the winner/loser player_id on archive results), not roster ids. For current players use search_players. Requires the BASIC plan or any History plan.",
       inputSchema: {
         query: z.string().min(3).describe('Full or partial player name, min 3 chars, e.g. "navratilova".'),
         tour: z.enum(['atp', 'wta']).optional().describe('atp or wta.'),
@@ -1192,11 +1176,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Archive career aggregates',
       description:
-        "One player's whole career over the results archive (1968–2022): W-L record overall and by " +
-        'surface/level/year, titles, and summed serve statistics with honest coverage — the corpus ' +
-        'records serve stats from 1991 only, so matches_with_stats states how many matches the serve ' +
-        'block covers. The name must resolve to one person; an ambiguous fragment returns the ' +
-        'candidate list to choose from. Requires the BASIC plan or any History plan.',
+        "One player's whole career over the results archive (1968 to 2022). W-L record in total and by surface/level/year, titles, and summed serve statistics. The corpus records serve stats from 1991 only, so matches_with_stats says how many matches the serve block covers. The name must resolve to one person. An ambiguous fragment returns the candidate list to choose from. Requires the BASIC plan or any History plan.",
       inputSchema: {
         name: z.string().min(3).describe('Player name fragment, min 3 chars — must resolve to exactly one person.'),
       },
@@ -1291,11 +1271,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Head-to-head',
       description:
-        'The all-time record between two players, across BOTH halves of the product: the results ' +
-        'archive (1968–2022) plus our own completed matches (2023 onward). Names are the keys — an ' +
-        'ambiguous fragment returns the candidate list to choose from rather than guessing. Totals ' +
-        'count only meetings with a known winner; walkovers and retirements are part of the record ' +
-        'and each meeting carries its outcome. Requires the BASIC plan or any History plan.',
+        "The all-time record between two players, across BOTH halves of the product. That is the results archive (1968 to 2022) plus our own completed matches (2023 onward). Names are the keys. An ambiguous fragment returns the candidate list to choose from, and nothing is guessed. Totals count only meetings with a known winner. Walkovers and retirements are part of the record, and each meeting carries its outcome. Requires the BASIC plan or any History plan.",
       inputSchema: {
         player1: z.string().min(3).describe('First player name (fragment, min 3 chars), e.g. "federer".'),
         player2: z.string().min(3).describe('Second player name (fragment, min 3 chars), e.g. "nadal".'),
@@ -1397,8 +1373,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Match timeline',
       description:
-        'Timeline of events for a match — breaks, games won, sets won, momentum runs. ' +
-        'Requires the PRO plan.',
+        "Timeline of events for a match: breaks, games won, sets won, momentum runs. Requires the PRO plan.",
       inputSchema: { match_id: matchIdField, limit: limitField(200, 30, 'events') },
       outputSchema: {
         ok: okField,
@@ -1436,9 +1411,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Match market prices',
       description:
-        'Match-winner market prices for a match — implied probability per player, with ' +
-        'bid, ask and mid. Requires the PRO plan. Match rows carry has_market — check it first; ' +
-        'a match with no market mapped has no prices to return.',
+        "Match-winner market prices for a match: implied probability per player, with bid, ask and mid. Requires the PRO plan. Match rows carry has_market, so check it first. A match with no market mapped has no prices to return.",
       inputSchema: { match_id: matchIdField, limit: limitField(200, 10, 'price points') },
       outputSchema: {
         ok: okField,
@@ -1497,10 +1470,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Rankings listing',
       description:
-        'The FULL published ranking table in rank order for one system — the newest week at or before ' +
-        'as_of. Rows carry player_name as published and a null player_id for players outside our roster, ' +
-        'so the table has no silent holes. ATP/WTA history runs deep; the ITF circuits begin 2026-07-29. ' +
-        'For point-in-time records of SPECIFIC players use get_player_rankings. Requires the PRO plan.',
+        "The FULL published ranking table in rank order for one system, from the newest week at or before as_of. Rows carry player_name as published and a null player_id for players outside our roster, so the table has no silent holes. ATP/WTA history runs deep. The ITF circuits begin 2026-07-29. For point-in-time records of SPECIFIC players use get_player_rankings. Requires the PRO plan.",
       inputSchema: {
         system: z
           .enum(['atp', 'wta', 'itf_jt', 'itf_mt', 'itf_wt'])
@@ -1586,13 +1556,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Player record and splits',
       description:
-        "One player's record over our own completed singles matches (2023 onward), default the last 365 " +
-        'days: W/L overall, last 12 months and by surface, venue, level and season; tiebreaks, deciding ' +
-        'sets, record after winning or losing the first set, comebacks; withdrawals; and the last N ' +
-        'matches. Every count carries its sample size and a percentage is null, never 0, on an empty ' +
-        'sample. On ULTRA it adds serve_return: measured serve and return statistics summed over the ' +
-        'window. Singles only — a doubles-team id is refused. For 1968–2022 use get_archive_career. ' +
-        'Requires the PRO plan (serve_return requires ULTRA).',
+        "One player's record over our own completed singles matches (2023 onward), by default the last 365 days. It gives W/L overall, over the last 12 months and by surface, venue, level and season. It also gives tiebreaks, deciding sets, the record after winning or losing the first set, comebacks, withdrawals and the last N matches. Every count carries its sample size, and a percentage on an empty sample is null, never 0. On ULTRA it adds serve_return: measured serve and return statistics summed over the window. Singles only, so a doubles-team id is refused. For 1968 to 2022 use get_archive_career. Requires the PRO plan (serve_return requires ULTRA).",
       inputSchema: {
         player_id: z.number().int().describe('Player id, as returned by search_players.'),
         from: z.string().optional().describe('Window start: YYYY-MM-DD (start of that day) or a UTC ISO-8601 instant. Default to minus 365 days.'),
@@ -1728,9 +1692,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Model analysis',
       description:
-        "Model analysis for a match: predicted win probability, the model's thesis and " +
-        'the key factors behind it. Requires the ULTRA plan. Match rows carry has_analysis — check it ' +
-        'first; a match with no thesis or profile has nothing to return.',
+        "Model analysis for a match: predicted win probability, the model's thesis and the main factors behind it. Requires the ULTRA plan. Match rows carry has_analysis, so check it first. A match with no thesis or profile has nothing to return.",
       inputSchema: { match_id: matchIdField },
       outputSchema: {
         ok: okField,
@@ -1803,11 +1765,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Player rankings as of a date',
       description:
-        'Point-in-time ranking records for SPECIFIC players: per system, the newest record in force ON OR ' +
-        'BEFORE as_of — never one dated after it. Every other ranking field in this API is the CURRENT ' +
-        'value joined at read time; this is the historical answer. Systems are never collapsed: ATP/WTA and ' +
-        'the ITF circuits carry rank+points, UTR a rating. ITF and UTR history begins 2026-07-29. ' +
-        'Requires the ULTRA plan.',
+        "Point-in-time ranking records for SPECIFIC players. Per system, the newest record in force ON OR BEFORE as_of, never one dated after it. Every other ranking field in this API is the CURRENT value joined at read time. This one is the historical answer. Systems are never collapsed: ATP/WTA and the ITF circuits carry rank+points, UTR a rating. ITF and UTR history begins 2026-07-29. Requires the ULTRA plan.",
       inputSchema: {
         player_ids: z
           .array(z.number().int())
@@ -1864,11 +1822,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Match statistics',
       description:
-        'In-play (or final) statistics for one match, in TWO families kept deliberately separate: DERIVED ' +
-        'is rebuilt from the point-by-point record (holds/breaks, break points, service/return points); ' +
-        'MEASURED is counted upstream and includes what no point record can yield — aces, double faults, ' +
-        'the serve split, winners/unforced errors. Measured coverage varies by tour; absent fields are ' +
-        'omitted, never zero-filled. Requires the ULTRA plan.',
+        "In-play (or final) statistics for one match, in TWO families kept separate on purpose. DERIVED is rebuilt from the point-by-point record (holds/breaks, break points, service/return points). MEASURED is counted upstream. It includes what no point record can yield: aces, double faults, the serve split, winners/unforced errors. Measured coverage varies by tour. Absent fields are omitted, never zero-filled. Requires the ULTRA plan.",
       inputSchema: { match_id: matchIdField },
       outputSchema: {
         ok: okField,
@@ -1977,11 +1931,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Charting: player career profile',
       description:
-        'Career shot-level profile from the Match Charting Project: serve placement (deuce/ad × wide/body/T), ' +
-        'return depth and outcomes, net play, clutch break/game/set-point serving, winners and errors by ' +
-        'wing, rally-length tendencies — summed over the player\'s charted matches. COVERAGE IS CURATED ' +
-        '(11,646 charted matches back to the 1960s, concentrated on the majors), not full-slate. An ' +
-        'ambiguous name returns the candidates to choose from. Requires the ULTRA plan.',
+        "Career shot-level profile from the Match Charting Project, summed over the player's charted matches. Serve placement (deuce/ad x wide/body/T), return depth and outcomes, net play, and clutch break/game/set-point serving. Also winners and errors by wing, and rally-length tendencies. COVERAGE IS CURATED, not full-slate: 11,646 charted matches back to the 1960s, concentrated on the majors. An ambiguous name returns the candidates to choose from. Requires the ULTRA plan.",
       inputSchema: {
         name: z.string().min(3).describe('Player name fragment, min 3 chars — must resolve to one charted person.'),
         gender: z.enum(['men', 'women']).optional().describe('Disambiguates a name charted on both tours.'),
@@ -2025,9 +1975,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Charting: one match, every stat family',
       description:
-        'Every Match Charting Project stat family for ONE charted match, both players, with the per-set ' +
-        'split (set 1, set 2, …, Total) exactly as charted. Charting ids are their own id space ' +
-        '(1960–2026), mostly matches with no counterpart in the live tables. Requires the ULTRA plan.',
+        "Every Match Charting Project stat family for ONE charted match, both players, with the per-set split (set 1, set 2, ..., Total) exactly as charted. Charting ids are their own id space (1960 to 2026). Most of these matches have no counterpart in the live tables. Requires the ULTRA plan.",
       inputSchema: {
         charting_match_id: z.number().int().describe('Charting match id — its own id space, not a match_id.'),
       },
@@ -2074,8 +2022,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'API status and plan',
       description:
-        'Check whether the Live Tennis API is reachable and which plan the configured ' +
-        'key is on. Useful for diagnosing why other tools are refusing data.',
+        "Check whether the Live Tennis API is reachable and which plan the configured key is on. Use it to find out why other tools are refusing data. Works with no key.",
       inputSchema: {},
       outputSchema: {
         ok: okField,
