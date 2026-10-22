@@ -95,6 +95,21 @@ const PLAYER_STATS = {
       // The API sends opponent null when the match row holds no opponent id.
       match_id: 100, date: '2026-10-18', tournament: 'Test Open', round: 'R16', surface: 'clay',
       opponent: null, won: true, outcome: 'walkover', score: null,
+    }, {
+      // The spec lets the two per-side game lists differ in length (a retirement
+      // mid-set, or a set only one side has a count for).
+      match_id: 99, date: '2026-10-16', tournament: 'Test Open', round: 'R32', surface: 'clay',
+      opponent: { id: 3, name: 'Player Three' }, won: false, outcome: 'retired',
+      score: { sets: [0, 2], games: [[6], [4, 6, 5]] },
+    }, {
+      match_id: 98, date: '2026-10-14', tournament: 'Test Open', round: 'R64', surface: 'clay',
+      opponent: { id: 4, name: 'Player Four' }, won: false, outcome: 'completed',
+      score: { sets: [0, 2], games: [[], [6, 4]] },
+    }, {
+      // An inner null means that game count is unknown, not 0.
+      match_id: 97, date: '2026-10-12', tournament: 'Test Open', round: 'Q2', surface: 'clay',
+      opponent: { id: 5, name: 'Player Five' }, won: true, outcome: 'completed',
+      score: { sets: [2, 1], games: [[6, null, 7], [4, 6, 5]] },
     }],
   },
   serve_return: { matches: 10, matches_with_stats: 8, serve: { aces: { total: 40, matches: 8, per_match: 5.0 } } },
@@ -424,6 +439,14 @@ async function main() {
   const nullOpp = ps.recent?.[1];
   if (nullOpp?.match_id !== 100 || nullOpp.opponent !== null || nullOpp.opponent_id !== null) {
     fail(`player_stats null opponent not mapped to nulls: ${JSON.stringify(nullOpp)}`);
+  }
+  // Asymmetric per-side game lists keep every set, with ? for a count the API
+  // does not hold. 1.6.2 walked the player's own list only and dropped the rest.
+  const wantScores = { 99: '6-4 ?-6 ?-5', 98: '?-6 ?-4', 97: '6-4 ?-6 7-5' };
+  for (const [id, want] of Object.entries(wantScores)) {
+    const row = ps.recent.find((m) => m.match_id === Number(id));
+    if (row?.score !== want) fail(`player_stats score for match ${id}: got ${JSON.stringify(row?.score)}, want ${JSON.stringify(want)}`);
+    if (!ps.message.includes(` ${want}`)) fail(`player_stats prose lost the score ${want}:\n${ps.message}`);
   }
 
   // player_stats on a doubles-team id: a refusal with a remedy, so ok:false.

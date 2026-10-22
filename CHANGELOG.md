@@ -5,6 +5,18 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.3] - 2026-10-22
+
+### Fixed
+- `player_stats` no longer drops sets from a recent match's score when the
+  two per-side game lists differ in length, which the spec allows. The
+  formatter walked the player's own list only, so `[[6], [4, 6, 5]]` came
+  out as `6-4` and `[[], [6, 4]]` as an empty string. It now walks the
+  longer list and shows a game count the API does not hold as `?`. Those
+  two now read `6-4 ?-6 ?-5` and `?-6 ?-4`, in the structured `score` and
+  in the prose alike. `test/tools-output.mjs` covers both shapes and an
+  inner null.
+
 ## [1.6.2] - 2026-10-22
 
 ### Fixed

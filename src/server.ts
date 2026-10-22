@@ -47,7 +47,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-export const VERSION = '1.6.2';
+export const VERSION = '1.6.3';
 
 type ToolResult = {
   content: { type: 'text'; text: string }[];
@@ -1660,7 +1660,10 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
               opponent_id: z.number().nullable().describe('Opponent player id.'),
               won: z.boolean().nullable().describe('True when this player won.'),
               outcome: z.string().nullable().describe('completed, retired, walkover or default.'),
-              score: z.string().nullable().describe('Final score from this player\'s side, e.g. "6-4 3-6 6-2".'),
+              score: z
+                .string()
+                .nullable()
+                .describe('Final score from this player\'s side, e.g. "6-4 3-6 6-2". A game count the API does not hold shows as ?.'),
             }),
           )
           .optional()
@@ -1679,9 +1682,14 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         if (!body || !body.records) return { text: 'No record returned for that player id.' };
         const r = body.records;
         const recent = (r.recent ?? []).map((m) => {
-          const g = m.score?.games;
+          // The two per-side lists can differ in length and hold nulls, so
+          // walk the longer one. A count the API does not hold shows as ?.
+          const sides = Array.isArray(m.score?.games) ? m.score.games : [];
+          const mine = sides[0] ?? [];
+          const theirs = sides[1] ?? [];
+          const sets = Math.max(mine.length, theirs.length);
           const score =
-            g && g.length === 2 ? (g[0] ?? []).map((v, i) => `${v ?? '?'}-${g[1]?.[i] ?? '?'}`).join(' ') : null;
+            sets > 0 ? Array.from({ length: sets }, (_, i) => `${mine[i] ?? '?'}-${theirs[i] ?? '?'}`).join(' ') : null;
           return {
             match_id: n(m.match_id),
             date: n(m.date),
