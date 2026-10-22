@@ -30,6 +30,7 @@ import {
   ListResourcesRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import {
+  APIStatusError,
   BadRequest,
   LiveTennisAPI,
   NotFound,
@@ -46,7 +47,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-export const VERSION = '1.6.1';
+export const VERSION = '1.6.2';
 
 type ToolResult = {
   content: { type: 'text'; text: string }[];
@@ -76,13 +77,15 @@ const READ_ONLY = {
 const okField = z
   .boolean()
   .describe(
-    'True when the call returned data. False for a tier wall, a missing or rejected key, ' +
-      'or an empty result — all of which are normal states with a clear remedy, not failures.',
+    'True when the request succeeded, including when the answer is an empty list. False for a missing or ' +
+      'rejected key, a plan that does not include this data, an unknown id, a rate limit or a network error. ' +
+      'The message then says what to do. check_api_status is the exception: it is true whenever the API ' +
+      'answered, and reports API key problems in the message.',
   );
 
 const messageField = z
   .string()
-  .describe('Human-readable summary. Identical to the text content, so either half can be used alone.');
+  .describe('Human-readable summary of the result, safe to relay to the user verbatim.');
 
 const MatchOut = z.object({
   // Nullable, not required: the upstream type allows a match without an id, and
@@ -93,16 +96,20 @@ const MatchOut = z.object({
     .nullable()
     .describe('atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events).'),
   tournament: z.string().nullable().describe('Event name, e.g. "Wimbledon".'),
-  tournament_id: z.string().nullable().describe('Stable tournament id — pass to get_tournament. Null where uncatalogued.'),
+  tournament_id: z.string().nullable().describe('Stable tournament id. Pass to get_tournament. Null where uncatalogued.'),
   round: z.string().nullable().describe('Round within the event, e.g. "QF".'),
   round_code: z
     .string()
     .nullable()
-    .describe('Round in the normalized vocabulary (F, SF, QF, R16 … Q); null when the label is unrecognised, never guessed.'),
+    .describe('Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed.'),
   player1: z.string().nullable().describe('Name of player 1.'),
   player2: z.string().nullable().describe('Name of player 2.'),
   score: z.string().nullable().describe('Formatted score line, e.g. "6-4 3-6 2-1".'),
-  status: z.string().nullable().describe('One of live, upcoming or completed.'),
+  status: z.string().nullable().describe('One of live, upcoming, completed or cancelled.'),
+  scheduled_time: z
+    .string()
+    .nullable()
+    .describe('Scheduled start, UTC ISO-8601. Null when the feed has not published one.'),
   surface: z.string().nullable().describe('Court surface, e.g. hard, clay, grass.'),
   indoor: z.boolean().nullable().describe('True when played indoors.'),
   serving: z.number().nullable().describe('1 or 2 while a point is in play, otherwise null.'),
@@ -119,7 +126,7 @@ const MatchOut = z.object({
     .nullable()
     .describe(
       'The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). ' +
-        'Null while the status has never changed since the field was introduced — never backfilled.',
+        'Null while the status has never changed since the field was introduced. Never backfilled.',
     ),
   withdrew: z
     .number()
@@ -147,7 +154,7 @@ const MatchOut = z.object({
   win_probability_p1: z
     .number()
     .nullable()
-    .describe('Model probability that player 1 wins, 0-1. Requires the ULTRA plan; null otherwise.'),
+    .describe('Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise.'),
 });
 
 const PlayerOut = z.object({
@@ -163,7 +170,11 @@ const PlayerOut = z.object({
 });
 
 const FixtureOut = z.object({
-  event_date: z.string().nullable().describe('Scheduled start, ISO timestamp.'),
+  event_date: z.string().nullable().describe('Scheduled date, YYYY-MM-DD.'),
+  start_time: z
+    .string()
+    .nullable()
+    .describe('Scheduled start, UTC ISO-8601. Null until the order of play assigns a time.'),
   tournament: z.string().nullable().describe('Event name.'),
   round: z.string().nullable().describe('Round within the event.'),
   player1: z.string().nullable().describe('Name of player 1.'),
@@ -179,20 +190,20 @@ const PriceOut = z.object({
 });
 
 const TournamentOut = z.object({
-  id: z.string().nullable().describe('Stable tournament id — the same id match objects carry as tournament_id.'),
+  id: z.string().nullable().describe('Stable tournament id, the same id match objects carry as tournament_id.'),
   name: z.string().nullable().describe('Tournament name.'),
   tour: z.string().nullable().describe('atp, wta, challenger, itf or juniors.'),
   surface: z.string().nullable().describe('Court surface: hard, clay or grass.'),
   indoor: z.boolean().nullable().describe('True when played indoors.'),
-  city: z.string().nullable().describe('Host city, from a curated table — null where not curated.'),
-  country: z.string().nullable().describe('Host country, ISO-3166 alpha-2 — null where not curated.'),
+  city: z.string().nullable().describe('Host city, from a curated table. Null where not curated.'),
+  country: z.string().nullable().describe('Host country, ISO-3166 alpha-2. Null where not curated.'),
   category: z
     .string()
     .nullable()
     .describe(
       'Tournament category (grand_slam, masters_1000, tour_finals, atp_500, atp_250, wta_1000, ' +
         'wta_500, wta_250, wta_125, challenger, itf, juniors). Set only where the catalogues agree ' +
-        'unambiguously — null otherwise, never derived from the name.',
+        'unambiguously. Null otherwise, never derived from the name.',
     ),
 });
 
@@ -204,21 +215,21 @@ const ArchiveSideOut = z.object({
   player_id: z
     .number()
     .nullable()
-    .describe('Corpus person id — pass to search_archive_players results to join bios. NOT a roster player id.'),
+    .describe('Corpus person id. Join it to search_archive_players results for bios. NOT a roster player id.'),
   hand: z.string().nullable().describe('"R" or "L".'),
   height_cm: z.number().nullable().describe('Height in cm, where recorded.'),
   age: z.number().nullable().describe('Age at the time of the match.'),
-  entry: z.string().nullable().describe('Draw entry where recorded (WC, Q, LL, …) — null for direct acceptances.'),
+  entry: z.string().nullable().describe('Draw entry where recorded (WC, Q, LL, ...). Null for direct acceptances.'),
 });
 
 const ArchiveMatchOut = z.object({
   id: z.number().nullable().describe('Archive match id. Pass to get_archive_match for the detail read with stats.'),
-  tour: z.string().nullable().describe('atp or wta — the results archive covers those two tours.'),
+  tour: z.string().nullable().describe('atp or wta. The results archive covers those two tours.'),
   tournament: z.string().nullable().describe('Tournament name.'),
   event_date: z
     .string()
     .nullable()
-    .describe('The tournament START date — per-match dates do not exist in this era’s records.'),
+    .describe("The tournament START date. Per-match dates do not exist in this era's records."),
   round: z.string().nullable().describe('Round code: F, SF, QF, R16 … Q1-Q4.'),
   level: z.string().nullable().describe('Source tier code: G, M, A, F, D, C, O, or a futures category code.'),
   surface: z.string().nullable().describe('Court surface.'),
@@ -226,8 +237,8 @@ const ArchiveMatchOut = z.object({
   outcome: z
     .string()
     .nullable()
-    .describe('completed, retired, walkover, default or abandoned — parsed, null when unparseable.'),
-  winner: ArchiveSideOut.describe('The winner — a stored field in the corpus, never an inference.'),
+    .describe('completed, retired, walkover, default or abandoned. Parsed, null when unparseable.'),
+  winner: ArchiveSideOut.describe('The winner, a stored field in the corpus, never an inference.'),
   loser: ArchiveSideOut.describe('The loser.'),
 });
 
@@ -235,14 +246,14 @@ const ArchiveBioOut = z.object({
   id: z
     .number()
     .nullable()
-    .describe('Corpus person id — the id archive match rows carry as winner/loser player_id. NOT a roster id.'),
+    .describe('Corpus person id, the id archive match rows carry as winner/loser player_id. NOT a roster id.'),
   tour: z.string().nullable().describe('atp or wta.'),
   name: z.string().nullable().describe('Player name.'),
   hand: z.string().nullable().describe('"R" or "L".'),
   dob: z.string().nullable().describe('Date of birth, ISO date.'),
   country: z.string().nullable().describe('3-letter country code.'),
   height_cm: z.number().nullable().describe('Height in cm.'),
-  career_high_rank: z.number().nullable().describe('Career-high rank, from the corpus’s own weekly tables.'),
+  career_high_rank: z.number().nullable().describe("Career-high rank, from the corpus's own weekly tables."),
   career_high_date: z.string().nullable().describe('The earliest week the career-high rank was reached.'),
 });
 
@@ -255,24 +266,24 @@ const H2HMeetingOut = z.object({
   tournament: z.string().nullable().describe('Tournament name.'),
   round: z.string().nullable().describe('Round.'),
   surface: z.string().nullable().describe('Court surface.'),
-  score: z.string().nullable().describe('Final score (archive rows only — read current rows from get_match).'),
-  outcome: z.string().nullable().describe('completed, retired, walkover, … — exclude non-completed yourself if needed.'),
+  score: z.string().nullable().describe('Final score (archive rows only. Read current rows from get_match).'),
+  outcome: z.string().nullable().describe('completed, retired, walkover, ... Exclude non-completed yourself if needed.'),
   winner: z
     .number()
     .nullable()
     .describe('1 or 2 OF THE REQUEST (player1/player2 as you passed them), not of the underlying match row.'),
-  match_id: z.number().nullable().describe('Our match id (current era rows) — pass to get_match.'),
+  match_id: z.number().nullable().describe('Our match id (current era rows). Pass to get_match.'),
 });
 
 const RankingRowOut = z.object({
-  player_id: z.number().nullable().describe('Roster player id — null on listing rows for players outside our roster.'),
+  player_id: z.number().nullable().describe('Roster player id. Null on listing rows for players outside our roster.'),
   player_name: z.string().nullable().describe('Name as the ranking publisher printed it (listing rows).'),
   system: z.string().nullable().describe('atp, wta, itf_jt, itf_mt, itf_wt or utr. Systems are never comparable.'),
   rank: z.number().nullable().describe('Null for UTR (a rating, not a ranking).'),
   points: z.number().nullable().describe('Null for UTR.'),
-  previous_rank: z.number().nullable().describe('Rank at the preceding snapshot week (ATP/WTA only; null elsewhere).'),
+  previous_rank: z.number().nullable().describe('Rank at the preceding snapshot week (ATP/WTA only, null elsewhere).'),
   rank_movement: z.number().nullable().describe("The circuit's own signed weekly movement (ITF systems only)."),
-  rating: z.number().nullable().describe('UTR only; null elsewhere.'),
+  rating: z.number().nullable().describe('UTR only, null elsewhere.'),
   effective_date: z.string().nullable().describe('The publication week this record took effect, YYYY-MM-DD.'),
 });
 
@@ -287,7 +298,7 @@ const StatsSideOut = z.object({
     .record(z.number().nullable())
     .nullable()
     .describe(
-      'Counted upstream — aces, double_faults, the serve split, winners/unforced errors where covered. ' +
+      'Counted upstream: aces, double_faults, the serve split, winners/unforced errors where covered. ' +
         'Absent fields are omitted, never zero-filled. Quantities named in both families are computed two ' +
         'different ways: a cross-check, not a duplication.',
     ),
@@ -335,6 +346,7 @@ function matchOut(m: Match): z.infer<typeof MatchOut> {
     player2: n(m.players?.p2?.name),
     score: n(formatScore(m.score)),
     status: n(m.status),
+    scheduled_time: n(m.scheduled_time),
     surface: n(m.surface),
     indoor: n(m.indoor),
     serving: n(m.score?.server),
@@ -423,6 +435,7 @@ function summarise(match: Match): string {
   ];
   if (match.surface) bits.push(`  Surface: ${match.surface}${match.indoor ? ' (indoor)' : ''}`);
   if (match.status && match.status !== 'live') bits.push(`  Status: ${match.status}`);
+  if (match.status === 'upcoming' && match.scheduled_time) bits.push(`  Starts: ${match.scheduled_time}`);
   if (match.winner) bits.push(`  Winner: ${match.winner === 1 ? p1 : p2}`);
   if (match.event_status) {
     bits.push(`  Event status: ${match.event_status}${match.withdrew ? ` (player ${match.withdrew} withdrew)` : ''}`);
@@ -499,7 +512,28 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         );
       }
       if (err instanceof NotFound) {
-        return fail('No data found for that request. The id may be wrong, or there may be no data yet.');
+        // /players/{id} and its stats answer a corpus person id with a signpost
+        // (`detail` + `see`) to the archive lookup that holds it. Relay it, or
+        // the model concludes the player does not exist.
+        const body = err.body as { detail?: string; see?: string } | undefined;
+        const signpost = body?.detail ? ` ${body.detail}${body.see ? ` See ${body.see}` : ''}` : '';
+        return fail(`No data found for that request. The id may be wrong, or there may be no data yet.${signpost}`);
+      }
+      if (err instanceof APIStatusError && err.status === 410) {
+        // 410 is the one status the SDK leaves on the base class. The body is a
+        // forwarding address, which is the whole reason the API answers 410
+        // rather than 404: a merged id names the record that absorbed it, a
+        // retired id says there is none. Without it the model retries the dead id.
+        const body = err.body as { merged_into?: number | null; merged_at?: string; detail?: string } | undefined;
+        const since = body?.merged_at ? ` since ${body.merged_at}` : '';
+        const why = body?.detail ? ` ${body.detail}` : '';
+        if (body?.merged_into != null) {
+          return fail(
+            `That id is gone${since}: it was merged into id ${body.merged_into}. ` +
+              `Re-point your records at ${body.merged_into} and retry with that id.${why}`,
+          );
+        }
+        return fail(`That id is gone${since}: it was retired with no successor, so there is nothing to forward to. Drop the id.${why}`);
       }
       if (err instanceof RateLimited) {
         // Three distinct 429s, each with a different correct reaction. Collapsing
@@ -544,10 +578,28 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         // is a refusal with a remedy, so it goes out as ok:false, not as data.
         return fail('That id is a doubles team. Player stats cover singles only — query each member player id instead.');
       }
+      if (err instanceof BadRequest) {
+        // Every other 400 is a rejected parameter, and the body says which and
+        // why: `error` is the code, `detail` the explanation, `allowed` the
+        // values an enumerated parameter accepts. Relay all three, so the model
+        // corrects the call instead of guessing from "bad_date".
+        const body = err.body as { detail?: string; allowed?: unknown } | undefined;
+        const code = err.errorCode ? ` (${err.errorCode})` : '';
+        const why = body?.detail ? ` ${body.detail}` : '';
+        const allowed = Array.isArray(body?.allowed) && body.allowed.length ? ` Accepted values: ${body.allowed.join(', ')}.` : '';
+        return fail(`The API rejected the request${code}.${why}${allowed} Correct the parameter and retry.`);
+      }
       // A genuine fault, unlike everything above. isError exempts it from output
-      // validation, so no structured content is required here.
+      // validation, so no structured content is required here. The API's own
+      // `detail`, when it sent one, says more than the status line does.
+      const detail = err instanceof APIStatusError ? (err.body as { detail?: unknown } | undefined)?.detail : undefined;
       return {
-        content: [{ type: 'text', text: `Request failed: ${err instanceof Error ? err.message : String(err)}` }],
+        content: [
+          {
+            type: 'text',
+            text: `Request failed: ${err instanceof Error ? err.message : String(err)}${typeof detail === 'string' ? ` ${detail}` : ''}`,
+          },
+        ],
         isError: true,
       };
     }
@@ -589,24 +641,24 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     .enum(['atp', 'wta', 'challenger', 'itf', 'juniors'])
     .optional()
     .describe(
-      'Tour filter; each name covers its doubles variants. Exhibition/team events carry no tour and are ' +
+      'Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are ' +
         'excluded whenever the filter is used.',
     );
   const playerFilterField = z
     .array(z.number().int())
     .max(50)
     .optional()
-    .describe('Player ids (from search_players), max 50 — keeps matches where ANY listed player is either participant.');
+    .describe('Player ids (from search_players), max 50. Keeps matches where ANY listed player is either participant.');
   const countryField = z
     .string()
     .length(3)
     .optional()
     .describe(
-      "Either participant's country — the lowercase 3-letter IOC-style code the Player object returns " +
+      "Either participant's country: the lowercase 3-letter IOC-style code the Player object returns " +
         '(e.g. ned, sui, gre), NOT ISO-3166. Players with no recorded country never match.',
     );
   const fromField = z.string().optional().describe('Earliest play date: YYYY-MM-DD (a whole UTC day) or ISO-8601 datetime.');
-  const toField = z.string().optional().describe('Latest play date: YYYY-MM-DD or ISO-8601; must not precede from.');
+  const toField = z.string().optional().describe('Latest play date: YYYY-MM-DD or ISO-8601. Must not precede from.');
 
   // -- BASIC --------------------------------------------------------------------
 
@@ -694,14 +746,14 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             prices: z.array(PriceOut).describe('Current prices per player.'),
           })
           .optional()
-          .describe('Match-winner market. Requires the PRO plan; absent otherwise.'),
+          .describe('Match-winner market. Requires the PRO plan, absent otherwise.'),
         analysis: z
           .object({
             win_probability_p1: z.number().nullable().describe('Model probability player 1 wins, 0-1.'),
             key_factors: z.array(z.string()).describe('Drivers behind the model view.'),
           })
           .optional()
-          .describe('Model analysis. Requires the ULTRA plan; absent otherwise.'),
+          .describe('Model analysis. Requires the ULTRA plan, absent otherwise.'),
       },
       annotations: READ_ONLY,
     },
@@ -908,13 +960,14 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           text: page.data
             .map(
               (f) =>
-                `${f.event_date ?? '?'} — ${f.tournament ?? '?'}` +
+                `${f.start_time ?? f.event_date ?? '?'} — ${f.tournament ?? '?'}` +
                 `${f.round ? ` (${f.round})` : ''}: ${f.player1_name ?? '?'} vs ${f.player2_name ?? '?'}`,
             )
             .join('\n'),
           data: {
             fixtures: page.data.map((f) => ({
               event_date: n(f.event_date),
+              start_time: n(f.start_time),
               tournament: n(f.tournament),
               round: n(f.round),
               player1: n(f.player1_name),
@@ -1055,7 +1108,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         level: z
           .string()
           .optional()
-          .describe('Source tier code: G=grand slam, M=masters, A=tour, F=finals, D=davis cup, C=challenger, O=olympics, or a futures category code (e.g. 15).'),
+          .describe('Source tier code: G=grand slam, M=masters, A=tour, F=finals, D=davis cup, C=challenger, O=olympics. Or a futures category code (e.g. 15).'),
         limit: limitField(200, 20, 'results'),
       },
       outputSchema: {
@@ -1178,7 +1231,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       description:
         "One player's whole career over the results archive (1968 to 2022). W-L record in total and by surface/level/year, titles, and summed serve statistics. The corpus records serve stats from 1991 only, so matches_with_stats says how many matches the serve block covers. The name must resolve to one person. An ambiguous fragment returns the candidate list to choose from. Requires the BASIC plan or any History plan.",
       inputSchema: {
-        name: z.string().min(3).describe('Player name fragment, min 3 chars — must resolve to exactly one person.'),
+        name: z.string().min(3).describe('Player name fragment, min 3 chars. Must resolve to exactly one person.'),
       },
       outputSchema: {
         ok: okField,
@@ -1215,7 +1268,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           .record(z.number().nullable())
           .nullable()
           .optional()
-          .describe('Summed serve stats + derived ratios. matches_with_stats states the coverage; ratios are null where the denominator is zero.'),
+          .describe('Summed serve stats + derived ratios. matches_with_stats states the coverage. Ratios are null where the denominator is zero.'),
       },
       annotations: READ_ONLY,
     },
@@ -1286,20 +1339,20 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           })
           .nullable()
           .optional()
-          .describe('The resolved names; null when no player matches the fragments.'),
+          .describe('The resolved names. Null when no player matches the fragments.'),
         totals: z
           .object({
             p1_wins: z.number().nullable().describe('Wins for player1 (of the request).'),
             p2_wins: z.number().nullable().describe('Wins for player2 (of the request).'),
             meetings: z.number().nullable().describe('Meetings with a known winner.'),
-            undecided: z.number().nullable().describe('Meetings with no derivable winner — never counted in wins.'),
+            undecided: z.number().nullable().describe('Meetings with no derivable winner. Never counted in wins.'),
           })
           .optional()
           .describe('The headline record.'),
         by_surface: z
           .record(z.object({ p1: z.number().nullable(), p2: z.number().nullable() }))
           .optional()
-          .describe('Decided wins per surface; keys are surface names plus "unknown".'),
+          .describe('Decided wins per surface. The keys are surface names plus "unknown".'),
         meetings: z.array(H2HMeetingOut).optional().describe('Individual meetings, newest first, capped at 200.'),
       },
       annotations: READ_ONLY,
@@ -1387,7 +1440,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             }),
           )
           .optional()
-          .describe('Events in chronological order.'),
+          .describe('Events, newest first, as the API returns them.'),
       },
       annotations: READ_ONLY,
     },
@@ -1474,8 +1527,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       inputSchema: {
         system: z
           .enum(['atp', 'wta', 'itf_jt', 'itf_mt', 'itf_wt'])
-          .describe('Ranking system to list. utr has no listing — it is a rating, not a ranking.'),
-        as_of: z.string().optional().describe('YYYY-MM-DD — serves the newest published week at or before this date. Omit for latest.'),
+          .describe('Ranking system to list. utr has no listing, because it is a rating, not a ranking.'),
+        as_of: z.string().optional().describe('YYYY-MM-DD. Serves the newest published week at or before this date. Omit for latest.'),
         limit: limitField(200, 20, 'ranking rows'),
       },
       outputSchema: {
@@ -1772,7 +1825,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           .min(1)
           .max(50)
           .describe('Roster player ids, as returned by search_players. Max 50.'),
-        as_of: z.string().optional().describe('YYYY-MM-DD — the record in force on this date. Omit for the latest known.'),
+        as_of: z.string().optional().describe('YYYY-MM-DD. The record in force on this date. Omit for the latest known.'),
         system: z
           .enum(['atp', 'wta', 'itf_jt', 'itf_mt', 'itf_wt', 'utr'])
           .optional()
@@ -1832,19 +1885,19 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             coverage: z
               .string()
               .nullable()
-              .describe('live | final | stale | none | diverged — summarises the response.'),
+              .describe('live | final | stale | none | diverged. Summarises the response.'),
             as_of: z.string().nullable().describe('When the underlying record was last updated (UTC).'),
             games_counted: z.number().nullable().describe('Games the derived family covers (tiebreaks excluded, counted separately).'),
             players: z
               .object({ p1: StatsSideOut.nullable(), p2: StatsSideOut.nullable() })
               .nullable()
-              .describe('Null when coverage is none — the match exists and holding nothing is the honest answer.'),
+              .describe('Null when coverage is none. The match exists, and holding nothing is the honest answer.'),
             freshness: z
               .record(z.any())
               .nullable()
               .describe(
                 'Per-family coverage/as_of/age. The two ages use DIFFERENT clocks (derived: against the ' +
-                  'newest score row; measured: wall clock) and must not be compared. On diverged the ' +
+                  'newest score row, measured: wall clock) and must not be compared. On diverged the ' +
                   'measured values are withheld and measured_divergence says why.',
               ),
           })
@@ -1933,7 +1986,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       description:
         "Career shot-level profile from the Match Charting Project, summed over the player's charted matches. Serve placement (deuce/ad x wide/body/T), return depth and outcomes, net play, and clutch break/game/set-point serving. Also winners and errors by wing, and rally-length tendencies. COVERAGE IS CURATED, not full-slate: 11,646 charted matches back to the 1960s, concentrated on the majors. An ambiguous name returns the candidates to choose from. Requires the ULTRA plan.",
       inputSchema: {
-        name: z.string().min(3).describe('Player name fragment, min 3 chars — must resolve to one charted person.'),
+        name: z.string().min(3).describe('Player name fragment, min 3 chars. Must resolve to one charted person.'),
         gender: z.enum(['men', 'women']).optional().describe('Disambiguates a name charted on both tours.'),
       },
       outputSchema: {
@@ -1945,7 +1998,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         families: z
           .record(z.any())
           .optional()
-          .describe('Per-family summed numeric columns — raw sums over the player\'s charted Total rows.'),
+          .describe('Per-family summed numeric columns: raw sums over the player\'s charted Total rows.'),
       },
       annotations: READ_ONLY,
     },
@@ -1977,7 +2030,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       description:
         "Every Match Charting Project stat family for ONE charted match, both players, with the per-set split (set 1, set 2, ..., Total) exactly as charted. Charting ids are their own id space (1960 to 2026). Most of these matches have no counterpart in the live tables. Requires the ULTRA plan.",
       inputSchema: {
-        charting_match_id: z.number().int().describe('Charting match id — its own id space, not a match_id.'),
+        charting_match_id: z.number().int().describe('Charting match id, in its own id space. Not a match_id.'),
       },
       outputSchema: {
         ok: okField,
@@ -2023,7 +2076,9 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       title: 'API status and plan',
       description:
         "Check whether the Live Tennis API is reachable and which plan the configured key is on. Use it to find out why other tools are refusing data. Works with no key.",
-      inputSchema: {},
+      // z.object({}) rather than a bare {}: the SDK lists a bare empty shape
+      // without additionalProperties:false, and livetennisapi-ai declares it.
+      inputSchema: z.object({}),
       outputSchema: {
         ok: okField,
         message: messageField,
@@ -2034,7 +2089,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           .nullable()
           .optional()
           .describe('Detected plan: FREE, BASIC, PRO or ULTRA. Null when no key is configured.'),
-        has_key: z.boolean().optional().describe('Whether a key was supplied with this call.'),
+        has_key: z.boolean().optional().describe('Whether a key was configured for this tool set.'),
       },
       annotations: READ_ONLY,
     },

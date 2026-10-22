@@ -260,7 +260,7 @@ npm run build
 LIVETENNISAPI_KEY=twjp_… node dist/index.js   # speaks MCP over stdio
 node dist/http.js                             # speaks MCP over HTTP, port 8081
 
-npm test               # protocol + transport isolation + rate limiting
+npm test               # protocol + parity with livetennisapi-ai + transport isolation + rate limiting + tool output
 npm run test:mutation  # proves those tests fail when the code breaks
 ```
 

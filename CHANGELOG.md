@@ -5,6 +5,27 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.2] - 2026-10-22
+
+### Fixed
+- Tool errors keep what the API said. A 410 for a merged player id names the
+  id that absorbed it, a retired id says there is no successor, a rejected
+  parameter carries the API's `detail` and its accepted values, and a 404
+  keeps the archive signpost. All of them used to come back as
+  `Request failed: merged` or `Request failed: bad_date`.
+- `scheduled_time` is back on every match row and `start_time` on every
+  fixture: in the output schemas, the structured content and the prose, as
+  livetennisapi-ai 1.2.1 has them. An upcoming match now says when it starts.
+- The 24 tools shared with livetennisapi-ai match 1.2.1 in full: input and
+  output schemas, every field description and `additionalProperties`. 1.6.1
+  matched the tool descriptions only. `test/ai-parity.mjs` holds them to a
+  vendored snapshot of the 1.2.1 definitions
+  (`test/fixtures/livetennisapi-ai-1.2.1.tools.json`, written by
+  `scripts/ai-parity-snapshot.mjs`). It runs in `npm test` and CI.
+
+### Changed
+- livetennisapi raised to ^1.10.1, which types `serve_return.matches_incomplete`.
+
 ## [1.6.1] - 2026-10-22
 
 ### Changed

@@ -34,6 +34,7 @@ const MATCH = {
   tournament: 'Test Open',
   round: 'QF',
   status: 'live',
+  scheduled_time: '2026-10-22T11:00:00Z',
   surface: 'hard',
   indoor: false,
   winner: null,
@@ -55,6 +56,18 @@ const OLDER_MATCH = {
   winner: null,
   players: { p1: { id: 3, name: 'Player Three' }, p2: { id: 4, name: 'Player Four' } },
   score: { sets: [0, 0], server: 2, is_tiebreak: false, games: [[2, 3]] },
+};
+// A match that has not started: the summary must carry its start time, which
+// is the one fact a "who plays next" question is asking for.
+const UPCOMING_MATCH = {
+  id: 103,
+  tournament: 'Test Open',
+  round: 'SF',
+  status: 'upcoming',
+  scheduled_time: '2026-10-23T13:30:00Z',
+  winner: null,
+  players: { p1: { id: 5, name: 'Player Five' }, p2: { id: 6, name: 'Player Six' } },
+  score: null,
 };
 const PLAYER = {
   id: 1, name: 'Player One', country: 'ESP', ranking: 3, ranking_points: 7000,
@@ -88,7 +101,7 @@ const PLAYER_STATS = {
   meta: { generated_at: '2026-10-22T00:00:00Z' },
 };
 const FIXTURE = {
-  event_date: '2026-07-23T12:00:00Z', tournament: 'Test Open', round: 'SF',
+  event_date: '2026-07-23', start_time: '2026-07-23T12:00:00Z', tournament: 'Test Open', round: 'SF',
   player1_name: 'Player One', player2_name: 'Player Two',
 };
 const MARKET = {
@@ -189,6 +202,28 @@ const upstream = createServer((req, res) => {
     res.writeHead(400, { 'content-type': 'application/json' });
     return res.end(JSON.stringify({ error: 'doubles_not_supported', detail: 'this id is a doubles team' }));
   }
+  // The documented refusals of /players/{id}/stats, each carrying something
+  // the caller needs: a successor id, an explanation, the accepted values, a
+  // signpost. The tool must relay them, not reduce them to the status word.
+  const refuse = (status, body) => {
+    res.writeHead(status, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(body));
+  };
+  if (path === '/players/410/stats') {
+    return refuse(410, { error: 'merged', merged_into: 42, merged_at: '2026-01-01T00:00:00Z', detail: 'Player 410 was merged into player 42.' });
+  }
+  if (path === '/players/411/stats') {
+    return refuse(410, { error: 'merged', merged_into: null, merged_at: '2026-01-01T00:00:00Z', detail: 'Player 411 was retired with no successor.' });
+  }
+  if (path === '/players/400/stats') {
+    return refuse(400, { error: 'bad_date', detail: 'from must be YYYY-MM-DD or an ISO-8601 instant' });
+  }
+  if (path === '/players/401/stats') {
+    return refuse(400, { error: 'bad_level', detail: 'unknown level', allowed: ['atp', 'wta', 'challenger', 'itf', 'juniors'] });
+  }
+  if (path === '/players/404/stats') {
+    return refuse(404, { error: 'not_found', detail: 'This id is a corpus person id.', see: '/api/public/v1/history/archive/players?id=404' });
+  }
   if (/\/players\/\d+\/stats$/.test(path)) return send(PLAYER_STATS);
   if (path.includes('/charting/players')) return send(CHARTING_PLAYER);
   if (path.includes('/charting/matches')) return send(CHARTING_MATCH);
@@ -208,7 +243,7 @@ const upstream = createServer((req, res) => {
   if (path.includes('/tournaments')) return send(path.includes('/tournaments/') ? TOURNAMENT : page(TOURNAMENT));
   if (path.includes('/players')) return send(single ? PLAYER : page(PLAYER));
   if (path.includes('/matches')) {
-    return send(single ? MATCH : { data: [MATCH, OLDER_MATCH], meta: { limit: 2, offset: 0, count: 2 } });
+    return send(single ? MATCH : { data: [MATCH, OLDER_MATCH, UPCOMING_MATCH], meta: { limit: 3, offset: 0, count: 3 } });
   }
   send(page(MATCH));
 });
@@ -355,9 +390,26 @@ async function main() {
   if (older?.id !== 102) fail(`expected the older-server row second, got ${JSON.stringify(older)}`);
   if (older.has_analysis !== null) fail(`absent has_analysis should map to null: ${JSON.stringify(older.has_analysis)}`);
   if (older.has_market !== null) fail(`absent has_market should map to null: ${JSON.stringify(older.has_market)}`);
-  const olderSummary = live.message.slice(live.message.indexOf('[102]'));
+  const olderSummary = live.message.slice(live.message.indexOf('[102]'), live.message.indexOf('[103]'));
   if (!olderSummary.includes('Player Three')) fail('older row not summarised');
   if (/Analysis:|Market:/.test(olderSummary)) fail(`summary invented coverage for the older row:\n${olderSummary}`);
+
+  // scheduled_time reaches the structured row on every match, and the prose
+  // names it for a match that has not started (livetennisapi-ai 1.2.1 does both).
+  if (m.scheduled_time !== '2026-10-22T11:00:00Z') fail(`scheduled_time not mapped: ${JSON.stringify(m.scheduled_time)}`);
+  if (older.scheduled_time !== null) fail(`absent scheduled_time should map to null: ${JSON.stringify(older.scheduled_time)}`);
+  const upcoming = (await call('get_upcoming_matches', withKey))?.result?.structuredContent;
+  const soon = upcoming?.matches?.[2];
+  if (soon?.id !== 103 || soon.scheduled_time !== '2026-10-23T13:30:00Z') fail(`upcoming row lost its start: ${JSON.stringify(soon)}`);
+  if (!upcoming.message.includes('Starts: 2026-10-23T13:30:00Z')) fail(`upcoming summary lacks the start time:\n${upcoming.message}`);
+  const liveSummary = live.message.slice(live.message.indexOf('[101]'), live.message.indexOf('[102]'));
+  if (liveSummary.includes('Starts:')) fail(`a live match must not carry a Starts line:\n${liveSummary}`);
+
+  // start_time reaches the fixture row and leads its prose line.
+  const fx = (await call('get_fixtures', withKey))?.result?.structuredContent;
+  const f0 = fx?.fixtures?.[0];
+  if (f0?.event_date !== '2026-07-23' || f0.start_time !== '2026-07-23T12:00:00Z') fail(`fixture times not mapped: ${JSON.stringify(f0)}`);
+  if (!fx.message.startsWith('2026-07-23T12:00:00Z')) fail(`fixture prose does not lead with start_time:\n${fx.message}`);
 
   // player_stats: the path and query reach upstream, and the score is turned to the player.
   const ps = (await call('player_stats', withKey))?.result?.structuredContent;
@@ -384,6 +436,32 @@ async function main() {
   if (dblSc?.ok !== false || !/doubles team/.test(dblSc.message ?? '')) {
     fail(`player_stats (doubles id) should be ok:false with the remedy: ${JSON.stringify(dblSc)}`);
   }
+
+  // The documented refusals: each is ok:false (a refusal with a remedy, not a
+  // fault) and keeps what the API said, so the model can act on it.
+  const refusal = async (player_id, extra = {}) => {
+    const r = await rpc(
+      { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'player_stats', arguments: { player_id, ...extra } } },
+      withKey,
+    );
+    if (r?.error) fail(`player_stats (${player_id}) returned a JSON-RPC error: ${JSON.stringify(r.error)}`);
+    if (r?.result?.isError) fail(`player_stats (${player_id}) was marked isError; a documented refusal is ok:false`);
+    const sc = r?.result?.structuredContent;
+    if (sc?.ok !== false || typeof sc.message !== 'string') fail(`player_stats (${player_id}) should be ok:false: ${JSON.stringify(sc)}`);
+    return sc.message;
+  };
+  const merged = await refusal(410);
+  if (!/merged into id 42/.test(merged) || !merged.includes('2026-01-01T00:00:00Z') || !merged.includes('Player 410 was merged')) {
+    fail(`410 merged lost the successor id, the date or the detail: ${merged}`);
+  }
+  const retired = await refusal(411);
+  if (!/retired with no successor/.test(retired) || !retired.includes('Player 411 was retired')) fail(`410 retired lost its detail: ${retired}`);
+  const badDate = await refusal(400, { from: 'yesterday' });
+  if (!badDate.includes('bad_date') || !badDate.includes('from must be YYYY-MM-DD')) fail(`400 bad_date lost its detail: ${badDate}`);
+  const badLevel = await refusal(401);
+  if (!badLevel.includes('bad_level') || !badLevel.includes('atp, wta, challenger, itf, juniors')) fail(`400 lost its allowed values: ${badLevel}`);
+  const signpost = await refusal(404);
+  if (!signpost.includes('corpus person id') || !signpost.includes('/history/archive/players?id=404')) fail(`404 lost its signpost: ${signpost}`);
 
   if (noData.length > tools.length / 2) {
     fail(`the stub fed only ${tools.length - noData.length}/${tools.length} tools real data — `
