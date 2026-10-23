@@ -43,7 +43,23 @@ const MATCH = {
   has_analysis: true,
   has_market: false,
   players: { p1: { id: 1, name: 'Player One' }, p2: { id: 2, name: 'Player Two' } },
-  score: { sets: [1, 0], server: 1, is_tiebreak: false, win_probability_p1: 0.61, games: [[6, 4], [3, 2]] },
+  // The score object as the API serves it today: beside the keys the tools
+  // name it carries the accept counter, the two clocks and the model twin
+  // (score first, 2026-10-23). The tools must pass through a richer object
+  // than they declare.
+  score: {
+    sets: [1, 0],
+    server: 1,
+    is_tiebreak: false,
+    win_probability_p1: 0.61,
+    danger: 0.2,
+    win_probability_p1_model: 0.58,
+    win_probability_meta: { model_version: 'markov-population-2026-08-23', anchor_effective: true },
+    sequence: 104,
+    accepted_at: '2026-10-22T11:30:00.000Z',
+    received_at: '2026-10-22T11:29:59.900Z',
+    games: [[6, 4], [3, 2]],
+  },
 };
 // A row from a server that predates has_analysis / has_market (2026-09-02):
 // both keys absent. The mapper must pass null through and the summary must

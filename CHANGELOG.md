@@ -5,6 +5,22 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.4] - 2026-10-23
+
+### Changed
+- Score objects now carry more keys than the tools name. Since 2026-10-23
+  every push and WebSocket `score` frame has a `model` field beside `score`
+  (`pending`, `ready` or `off`) and leaves twice per state on the push feed,
+  and the score object itself has carried `sequence`, `accepted_at`,
+  `received_at`, `win_probability_p1_model` and `win_probability_meta` for a
+  while. This server reads scores over REST, where a state is one object and
+  `model` never appears, so its output is unchanged. `test/tools-output.mjs`
+  now drives the match and score tools with a score that carries those keys,
+  so the output schemas are known to pass them through without complaint.
+  Live-frame consumers (a `PushStream` or `LiveScoreStream` client) should
+  dedup on `(match_id, score.sequence, model)`; see the livetennisapi SDK
+  1.10.2 notes.
+
 ## [1.6.3] - 2026-10-22
 
 ### Fixed
