@@ -278,13 +278,13 @@ const RankingRowOut = z.object({
 
 const StatsSideOut = z.object({
   derived: z
-    .record(z.number().nullable())
+    .record(z.string(), z.number().nullable())
     .describe(
       'Rebuilt from the point-by-point record: service/return games and points, hold_pct, break_pct, ' +
         'break points faced/saved/converted. Null percentages mean a zero denominator, never 0.',
     ),
   measured: z
-    .record(z.number().nullable())
+    .record(z.string(), z.number().nullable())
     .nullable()
     .describe(
       'Counted upstream — aces, double_faults, the serve split, winners/unforced errors where covered. ' +
@@ -1093,8 +1093,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         result: ArchiveMatchOut.optional().describe('The archive result.'),
         stats: z
           .object({
-            winner: z.record(z.number().nullable()).nullable().describe('Serve stats for the winner, where recorded.'),
-            loser: z.record(z.number().nullable()).nullable().describe('Serve stats for the loser, where recorded.'),
+            winner: z.record(z.string(), z.number().nullable()).nullable().describe('Serve stats for the winner, where recorded.'),
+            loser: z.record(z.string(), z.number().nullable()).nullable().describe('Serve stats for the loser, where recorded.'),
           })
           .nullable()
           .optional()
@@ -1197,11 +1197,11 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             losses: z.number().nullable().describe('Career losses.'),
             titles: z.number().nullable().describe('Finals won (excluding abandoned finals).'),
             by_surface: z
-              .record(z.object({ wins: z.number().nullable(), losses: z.number().nullable() }))
+              .record(z.string(), z.object({ wins: z.number().nullable(), losses: z.number().nullable() }))
               .nullable()
               .describe('W-L per surface.'),
             by_level: z
-              .record(z.object({ wins: z.number().nullable(), losses: z.number().nullable() }))
+              .record(z.string(), z.object({ wins: z.number().nullable(), losses: z.number().nullable() }))
               .nullable()
               .describe('W-L per source tier code.'),
           })
@@ -1212,7 +1212,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           .optional()
           .describe('Per-season W-L.'),
         serve: z
-          .record(z.number().nullable())
+          .record(z.string(), z.number().nullable())
           .nullable()
           .optional()
           .describe('Summed serve stats + derived ratios. matches_with_stats states the coverage; ratios are null where the denominator is zero.'),
@@ -1297,7 +1297,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           .optional()
           .describe('The headline record.'),
         by_surface: z
-          .record(z.object({ p1: z.number().nullable(), p2: z.number().nullable() }))
+          .record(z.string(), z.object({ p1: z.number().nullable(), p2: z.number().nullable() }))
           .optional()
           .describe('Decided wins per surface; keys are surface names plus "unknown".'),
         meetings: z.array(H2HMeetingOut).optional().describe('Individual meetings, newest first, capped at 200.'),
@@ -1581,17 +1581,17 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           .describe('The window applied, UTC.'),
         overall: WinLossOut.nullable().optional().describe('W/L over the window.'),
         last_12_months: WinLossOut.nullable().optional().describe('W/L over the 12 months ending at the window end.'),
-        by_surface: z.record(WinLossOut).nullable().optional().describe('W/L keyed hard, clay, grass, unknown.'),
-        by_venue: z.record(WinLossOut).nullable().optional().describe('W/L keyed indoor, outdoor, unknown.'),
-        by_level: z.record(WinLossOut).nullable().optional().describe('W/L keyed by match tour, or unknown.'),
-        by_season: z.record(WinLossOut).nullable().optional().describe('W/L keyed by UTC calendar year.'),
+        by_surface: z.record(z.string(), WinLossOut).nullable().optional().describe('W/L keyed hard, clay, grass, unknown.'),
+        by_venue: z.record(z.string(), WinLossOut).nullable().optional().describe('W/L keyed indoor, outdoor, unknown.'),
+        by_level: z.record(z.string(), WinLossOut).nullable().optional().describe('W/L keyed by match tour, or unknown.'),
+        by_season: z.record(z.string(), WinLossOut).nullable().optional().describe('W/L keyed by UTC calendar year.'),
         sets: z
-          .record(z.unknown())
+          .record(z.string(), z.unknown())
           .nullable()
           .optional()
           .describe('Set-based record: sample, tiebreaks, deciding_sets, after_winning_first_set, after_losing_first_set, comebacks, sets.'),
         withdrawals: z
-          .record(z.unknown())
+          .record(z.string(), z.unknown())
           .nullable()
           .optional()
           .describe('Retired / walkover / default, each as given (this player) and received (the opponent).'),
@@ -1613,7 +1613,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
           .optional()
           .describe('The last N matches, newest first.'),
         serve_return: z
-          .record(z.unknown())
+          .record(z.string(), z.unknown())
           .nullable()
           .optional()
           .describe('ULTRA only, null below: summed serve and return statistics, each ratio as numerator/denominator/pct with its match count.'),
@@ -1783,7 +1783,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         message: messageField,
         rankings: z.array(RankingRowOut).optional().describe('One record per player × system held.'),
         coverage: z
-          .record(z.any())
+          .record(z.string(), z.any())
           .nullable()
           .optional()
           .describe(
@@ -1840,7 +1840,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
               .nullable()
               .describe('Null when coverage is none — the match exists and holding nothing is the honest answer.'),
             freshness: z
-              .record(z.any())
+              .record(z.string(), z.any())
               .nullable()
               .describe(
                 'Per-family coverage/as_of/age. The two ages use DIFFERENT clocks (derived: against the ' +
@@ -1939,11 +1939,11 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
       outputSchema: {
         ok: okField,
         message: messageField,
-        player: z.record(z.any()).nullable().optional().describe('The resolved charted player.'),
+        player: z.record(z.string(), z.any()).nullable().optional().describe('The resolved charted player.'),
         matches_charted: z.number().nullable().optional().describe('The sample every summed field covers.'),
         coverage: z.string().nullable().optional().describe('A reminder that charting coverage is curated, not full-slate.'),
         families: z
-          .record(z.any())
+          .record(z.string(), z.any())
           .optional()
           .describe('Per-family summed numeric columns — raw sums over the player\'s charted Total rows.'),
       },
@@ -1985,8 +1985,8 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         charting_match_id: z.number().nullable().optional().describe('The charted match.'),
         mcp_id: z.string().nullable().optional().describe("The Match Charting Project's own row identifier."),
         gender: z.string().nullable().optional(),
-        players: z.record(z.any()).nullable().optional().describe('Both players as charted.'),
-        families: z.record(z.any()).optional().describe('Every stat family, per player, with the per-set split.'),
+        players: z.record(z.string(), z.any()).nullable().optional().describe('Both players as charted.'),
+        families: z.record(z.string(), z.any()).optional().describe('Every stat family, per player, with the per-set split.'),
       },
       annotations: READ_ONLY,
     },
