@@ -68,7 +68,7 @@ protect with SSO.
 | Cloudflare edge | DDoS absorption, TLS termination; the origin IP is never exposed |
 | Loopback bind | No inbound firewall hole; unreachable except via the tunnel |
 | Per-caller rate limit | 60/min anonymous, 300/min keyed — keyed on API key, not IP |
-| Upstream API auth | Every tool call is metered and authorised per key and tier |
+| Live Tennis API auth | Every tool call is metered and authorised per key and tier |
 | `DynamicUser` + syscall filter | Compromise yields an ephemeral user owning nothing |
 | `MemoryMax=256M` | A flood cannot starve the trading app sharing this host |
 

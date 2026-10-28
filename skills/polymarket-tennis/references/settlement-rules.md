@@ -105,7 +105,7 @@ to the lifecycle `status`:
 
 - `outcome` (closed vocabulary, `null` until settled): `completed`, `retired`,
   `walkover`, `default`, `abandoned`
-- `event_status` (the feed's designator): `Retired`, `Walk Over`, `Cancelled`,
+- `event_status` (the detailed match-state label): `Retired`, `Walk Over`, `Cancelled`,
   `Postponed`, `Interrupted`, …
 - `withdrew`: which player stopped or conceded
 
