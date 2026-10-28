@@ -53,6 +53,13 @@ jobs:
       - name: Speaks the MCP protocol
         run: node test/protocol.mjs
 
+      # The 24 tools shared with livetennisapi-ai are defined word for word the
+      # same in both packages, schemas and field descriptions included, against
+      # a vendored snapshot of the pinned AI release. A model that learned one
+      # wording misreads the other when they drift.
+      - name: Shared tools match livetennisapi-ai
+        run: node test/ai-parity.mjs
+
       # The HTTP transport is MULTI-TENANT: it serves whoever calls it, on their
       # own key. The single worst bug it could have is falling back to the
       # operator's key from the environment, which would hand every anonymous

@@ -110,8 +110,8 @@ function limiterKey(req: Request): string {
 }
 
 // Anonymous callers are indexers and browsers doing `initialize` + `tools/list`
-// — cheap, and none of it touches the upstream API. Authenticated callers get a
-// far higher ceiling because their real quota is enforced upstream per key and
+// — cheap, and none of it touches the Live Tennis API. Authenticated callers get
+// a far higher ceiling because the API enforces their real quota per key and
 // per tier; this limit exists only to stop one client saturating the process.
 const limiter = rateLimit({
   windowMs: 60_000,

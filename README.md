@@ -84,14 +84,14 @@ Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/su
 | `player_stats` | One player's W/L by surface, level and season, set-based record, recent matches; serve/return sums on ULTRA | PRO |
 | `get_player_rankings` | Point-in-time ranking records for specific players, as of any date | ULTRA |
 | `get_match_statistics` | In-play statistics — aces, serve split, hold/break %, break points | ULTRA |
-| `get_charting_player` | Career shot-level profile from the Match Charting Project | ULTRA |
+| `get_charting_player` | Career profile from shot-level charting data | ULTRA |
 | `get_charting_match` | One charted match, every stat family, per-set split | ULTRA |
 | `get_match_analysis` | Model thesis, win probability, key factors | ULTRA |
 | `check_api_status` | Reachability + which plan your key is on | — |
 
 The six BASIC history tools are also unlocked by any History plan, which works
 on top of a free key. The **results archive (1968–2022)** — ATP and WTA, main
-draws, qualifying and the ITF/futures tiers — ends exactly where our own
+draws, qualifying and the ITF/futures tiers — ends exactly where the current
 results begin (2023), so `search_archive_matches` answers "Borg's Wimbledon
 finals" and `get_recent_results` answers "yesterday's scores"; `get_h2h` spans
 both in one call.
@@ -157,7 +157,7 @@ It is multi-tenant and holds **no key of its own**: every request builds its own
 server bound to the key that request presented, and there is deliberately no
 fallback to the host's environment. The endpoint applies its own transport-level
 limit per caller — 60 req/min anonymous, 300 keyed. That limit only protects
-this host process; it is **not** your API quota, which is enforced upstream per
+this host process. It is **not** your API quota, which the API enforces per
 key and tier (see the quota table above).
 
 Self-hosting it: `deploy/install-http.sh` and `deploy/TUNNEL.md`.
@@ -260,7 +260,7 @@ npm run build
 LIVETENNISAPI_KEY=twjp_… node dist/index.js   # speaks MCP over stdio
 node dist/http.js                             # speaks MCP over HTTP, port 8081
 
-npm test               # protocol + transport isolation + rate limiting
+npm test               # protocol + parity with livetennisapi-ai + transport isolation + rate limiting + tool output
 npm run test:mutation  # proves those tests fail when the code breaks
 ```
 
