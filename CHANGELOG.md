@@ -187,7 +187,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
     titles, and summed serve stats with honest coverage
     (`matches_with_stats`).
   - `get_h2h` (BASIC/History) — cross-era head-to-head: the results archive
-    plus our own completed matches (2023→now) in one record. Each meeting's
+    plus the completed matches from 2023 on in one record. Each meeting's
     `winner` is 1|2 of the request, and carries its `outcome` so walkovers
     and retirements can be excluded.
 - **Ambiguous names come back as candidates, not errors.** `/h2h` and the

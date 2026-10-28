@@ -91,7 +91,7 @@ Get a **free** key (no card) at [livetennisapi.com](https://livetennisapi.com/su
 
 The six BASIC history tools are also unlocked by any History plan, which works
 on top of a free key. The **results archive (1968–2022)** — ATP and WTA, main
-draws, qualifying and the ITF/futures tiers — ends exactly where our own
+draws, qualifying and the ITF/futures tiers — ends exactly where the current
 results begin (2023), so `search_archive_matches` answers "Borg's Wimbledon
 finals" and `get_recent_results` answers "yesterday's scores"; `get_h2h` spans
 both in one call.

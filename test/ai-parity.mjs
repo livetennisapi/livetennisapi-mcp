@@ -54,24 +54,33 @@ const REWORDED = [
   ['Every Match Charting Project stat family', 'Every charting stat family'],
   ["The Match Charting Project's own row identifier.", "The charting dataset's own row identifier."],
   ["Career-high rank, from the corpus's own weekly tables.", "Career-high rank, from the archive's weekly ranking tables."],
+  ["(our own completed matches, 2023 onward)", "(completed matches from 2023 onward)"],
+  ["plus our own completed matches (2023 onward)", "plus the completed matches from 2023 onward"],
+  ["where our own results (get_recent_results) begin", "where the current results (get_recent_results) begin"],
+  ["Name as the ranking publisher printed it (listing rows).", "Player name as it appears in the ranking (listing rows)."],
+  ["The circuit's own signed weekly movement (ITF systems only).", "Signed weekly rank movement (ITF systems only)."],
 ];
 const reworded = new Map(REWORDED.map(([from]) => [from, 0]));
+const VALUE_KEYS = new Set(['default', 'const', 'enum', 'examples']);
 
 /**
  * The snapshot value with every REWORDED pair applied to its description
  * strings, counting uses. Names, enums, defaults and every other value are
  * left alone, so a pair can never hide a change to them.
  */
-function reword(v, key) {
-  if (typeof v === 'string' && key === 'description') {
+function reword(v, key, inValue = false) {
+  if (typeof v === 'string' && key === 'description' && !inValue) {
     let s = v;
     for (const [from, to] of REWORDED) {
       if (s.includes(from)) { reworded.set(from, reworded.get(from) + 1); s = s.split(from).join(to); }
     }
     return s;
   }
-  if (Array.isArray(v)) return v.map((x) => reword(x));
-  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, reword(x, k)]));
+  if (Array.isArray(v)) return v.map((x) => reword(x, undefined, inValue));
+  if (v && typeof v === 'object') {
+    // Inside a default, const, enum or examples the data is a value, never a description.
+    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, reword(x, k, inValue || VALUE_KEYS.has(k))]));
+  }
   return v;
 }
 

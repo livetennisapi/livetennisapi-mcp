@@ -261,7 +261,7 @@ const H2HMeetingOut = z.object({
   era: z
     .string()
     .nullable()
-    .describe('"archive" (results archive, 1968-2022) or "current" (our own completed matches, 2023 onward).'),
+    .describe('"archive" (results archive, 1968-2022) or "current" (completed matches from 2023 onward).'),
   date: z.string().nullable().describe('Match date (current era) or tournament start date (archive era).'),
   tournament: z.string().nullable().describe('Tournament name.'),
   round: z.string().nullable().describe('Round.'),
@@ -277,12 +277,12 @@ const H2HMeetingOut = z.object({
 
 const RankingRowOut = z.object({
   player_id: z.number().nullable().describe('Roster player id. Null on listing rows for players outside our roster.'),
-  player_name: z.string().nullable().describe('Name as the ranking publisher printed it (listing rows).'),
+  player_name: z.string().nullable().describe('Player name as it appears in the ranking (listing rows).'),
   system: z.string().nullable().describe('atp, wta, itf_jt, itf_mt, itf_wt or utr. Systems are never comparable.'),
   rank: z.number().nullable().describe('Null for UTR (a rating, not a ranking).'),
   points: z.number().nullable().describe('Null for UTR.'),
   previous_rank: z.number().nullable().describe('Rank at the preceding snapshot week (ATP/WTA only, null elsewhere).'),
-  rank_movement: z.number().nullable().describe("The circuit's own signed weekly movement (ITF systems only)."),
+  rank_movement: z.number().nullable().describe("Signed weekly rank movement (ITF systems only)."),
   rating: z.number().nullable().describe('UTR only, null elsewhere.'),
   effective_date: z.string().nullable().describe('The publication week this record took effect, YYYY-MM-DD.'),
 });
@@ -1091,7 +1091,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Results archive (1968–2022)',
       description:
-        "Search the results archive: completed-match RESULTS from 1968 through 2022. ATP and WTA, main draws, qualifying and the ITF/futures tiers. Each record has winner and loser, final score, and seeds and ranks AT THE TIME of the match. Use this for historical questions (\"Borg's Wimbledon finals\"). The archive ends 2022-12-31, where our own results (get_recent_results) begin. Requires the BASIC plan or any History plan.",
+        "Search the results archive: completed-match RESULTS from 1968 through 2022. ATP and WTA, main draws, qualifying and the ITF/futures tiers. Each record has winner and loser, final score, and seeds and ranks AT THE TIME of the match. Use this for historical questions (\"Borg's Wimbledon finals\"). The archive ends 2022-12-31, where the current results (get_recent_results) begin. Requires the BASIC plan or any History plan.",
       inputSchema: {
         player_name: z
           .string()
@@ -1324,7 +1324,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Head-to-head',
       description:
-        "The all-time record between two players, across BOTH halves of the product. That is the results archive (1968 to 2022) plus our own completed matches (2023 onward). Names are the keys. An ambiguous fragment returns the candidate list to choose from, and nothing is guessed. Totals count only meetings with a known winner. Walkovers and retirements are part of the record, and each meeting carries its outcome. Requires the BASIC plan or any History plan.",
+        "The all-time record between two players, across BOTH halves of the product. That is the results archive (1968 to 2022) plus the completed matches from 2023 onward. Names are the keys. An ambiguous fragment returns the candidate list to choose from, and nothing is guessed. Totals count only meetings with a known winner. Walkovers and retirements are part of the record, and each meeting carries its outcome. Requires the BASIC plan or any History plan.",
       inputSchema: {
         player1: z.string().min(3).describe('First player name (fragment, min 3 chars), e.g. "federer".'),
         player2: z.string().min(3).describe('Second player name (fragment, min 3 chars), e.g. "nadal".'),
@@ -1609,7 +1609,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Player record and splits',
       description:
-        "One player's record over our own completed singles matches (2023 onward), by default the last 365 days. It gives W/L overall, over the last 12 months and by surface, venue, level and season. It also gives tiebreaks, deciding sets, the record after winning or losing the first set, comebacks, withdrawals and the last N matches. Every count carries its sample size, and a percentage on an empty sample is null, never 0. On ULTRA it adds serve_return: measured serve and return statistics summed over the window. Singles only, so a doubles-team id is refused. For 1968 to 2022 use get_archive_career. Requires the PRO plan (serve_return requires ULTRA).",
+        "One player's record over completed singles matches from 2023 onward, by default the last 365 days. It gives W/L overall, over the last 12 months and by surface, venue, level and season. It also gives tiebreaks, deciding sets, the record after winning or losing the first set, comebacks, withdrawals and the last N matches. Every count carries its sample size, and a percentage on an empty sample is null, never 0. On ULTRA it adds serve_return: measured serve and return statistics summed over the window. Singles only, so a doubles-team id is refused. For 1968 to 2022 use get_archive_career. Requires the PRO plan (serve_return requires ULTRA).",
       inputSchema: {
         player_id: z.number().int().describe('Player id, as returned by search_players.'),
         from: z.string().optional().describe('Window start: YYYY-MM-DD (start of that day) or a UTC ISO-8601 instant. Default to minus 365 days.'),
