@@ -34,7 +34,7 @@ Environment=HOST=127.0.0.1
 Environment=PORT=8081
 
 # Requests per minute per caller. Anonymous callers are indexers doing
-# initialize + tools/list; authenticated callers are metered upstream per key
+# initialize + tools/list; authenticated callers are metered by the API per key
 # and tier anyway, so this only stops one client saturating the process.
 Environment=MCP_RATE_LIMIT_ANON=60
 Environment=MCP_RATE_LIMIT_KEYED=300
@@ -46,7 +46,7 @@ Environment=MCP_RATE_LIMIT_KEYED=300
 # back would serve every anonymous caller on the operator's key — silently
 # giving away paid data at our tier, forever, with nothing in the logs to show
 # it. Clearing the variable here means that even if such a fallback were ever
-# reintroduced upstream, there would be nothing for it to find.
+# reintroduced in the code, there would be nothing for it to find.
 Environment=LIVETENNISAPI_KEY=
 
 # Stateless: no database, no files, no credentials, nothing to persist. So it

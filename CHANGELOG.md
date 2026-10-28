@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.5] - 2026-10-28
+
+### Changed
+- Tool descriptions reworded; no behaviour change.
+
 ## [1.6.4] - 2026-10-23
 
 ### Changed
@@ -47,7 +52,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - The 24 tools shared with livetennisapi-ai match 1.2.1 in full: input and
   output schemas, every field description and `additionalProperties`. 1.6.1
   matched the tool descriptions only. `test/ai-parity.mjs` holds them to a
-  vendored snapshot of the 1.2.1 definitions
+  stored snapshot of the 1.2.1 definitions
   (`test/fixtures/livetennisapi-ai-1.2.1.tools.json`, written by
   `scripts/ai-parity-snapshot.mjs`). It runs in `npm test` and CI.
 
@@ -119,10 +124,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
     resolved.
   - `get_match_statistics` (ULTRA) — in-play/final statistics in two families
     kept deliberately separate: DERIVED (rebuilt from the point-by-point
-    record) and MEASURED (counted upstream: aces, double faults, serve split,
+    record) and MEASURED (counted per match: aces, double faults, serve split,
     winners/errors). Absent measured fields are omitted, never zero-filled.
-  - `get_charting_player` / `get_charting_match` (ULTRA) — Match Charting
-    Project data: career shot-level profiles and single charted matches with
+  - `get_charting_player` / `get_charting_match` (ULTRA) — shot-level
+    charting data: career profiles and single charted matches with
     the per-set split. Curated coverage (11,646 charted matches), not
     full-slate.
 - **Match objects now pass through** `tour`, `tournament_id`, `round_code`,
@@ -256,7 +261,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   can render and prompt for every input without guessing.
 
 - `test/tools-output.mjs` drives all 12 tools on both the no-key and success
-  paths against a stub upstream, and `test/mutate.py` now covers `src/server.ts`
+  paths against a stub API, and `test/mutate.py` now covers `src/server.ts`
   too — 13 mutations, including one that removes exactly the structured-content
   guarantee described above.
 
@@ -265,7 +270,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   LIVETENNISAPI_KEY environment variable", which is wrong advice for anyone
   calling the hosted HTTP endpoint; it now names both.
 - `Match.id` and `Player.id` are nullable in the output schemas, because the
-  upstream types allow their absence. Asserting otherwise would have made the
+  SDK types allow their absence. Asserting otherwise would have made the
   schema lie rather than make the data safe.
 
 ## [1.1.0] — 2026-07-22

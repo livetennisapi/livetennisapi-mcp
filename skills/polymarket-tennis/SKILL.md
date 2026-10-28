@@ -38,7 +38,7 @@ metadata:
 4. **Detect match endings with `outcome` and `event_status`, not `status`.**
    `status` is only the lifecycle (`upcoming|live|completed|cancelled`).
    `outcome` is `completed|retired|walkover|default|abandoned` and `null` until
-   settled; `event_status` is the feed designator (`Retired`, `Walk Over`,
+   settled; `event_status` is the detailed match-state label (`Retired`, `Walk Over`,
    `Cancelled`, `Postponed`, `Interrupted`); `withdrew` names who stopped.
 5. **Never guess a market-to-match pairing.** `match_market` returns `None` on
    ambiguity; skip it. Use `override_match_id` / `--match-id` only when the user

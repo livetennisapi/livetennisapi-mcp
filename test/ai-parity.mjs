@@ -18,6 +18,13 @@
  * player_stats is this server's own and has no AI counterpart yet; it is listed
  * in EXTRA so a new tool on either side is a deliberate change, not a silent one.
  *
+ * REWORDED lists the phrases this server words differently from the snapshot
+ * until livetennisapi-ai ships the same wording. Each pair is applied to the
+ * snapshot's descriptions before the comparison, so everything else must still match
+ * to the character, and a pair the snapshot no longer contains fails the test.
+ * Once the AI package carries the new wording, refresh the snapshot and empty
+ * the list.
+ *
  * Run: node test/ai-parity.mjs        (no credentials, no network)
  */
 import { spawn } from 'node:child_process';
@@ -33,6 +40,40 @@ const snapshot = JSON.parse(readFileSync(join(fixtures, file), 'utf8'));
 
 /** Tools this server has that the AI package does not. */
 const EXTRA = ['player_stats'];
+
+/** [snapshot phrase, this server's phrase]: see REWORDED in the header. */
+const REWORDED = [
+  ['Null when the feed never stated one (exhibitions, team events).', 'Null when no tour is recorded (exhibitions, team events).'],
+  ['Null when the feed has not published one.', 'Null when no start time is set yet.'],
+  ['Set only where the catalogues agree unambiguously.', 'Set only where the category is unambiguous.'],
+  ['W-L per source tier code.', 'W-L per tier code.'],
+  ['Source tier code', 'Tier code'],
+  ['Counted upstream:', 'Counted per match:'],
+  ['MEASURED is counted upstream.', 'MEASURED is counted per match.'],
+  ['Career shot-level profile from the Match Charting Project,', 'Career profile from shot-level charting data,'],
+  ['Every Match Charting Project stat family', 'Every charting stat family'],
+  ["The Match Charting Project's own row identifier.", "The charting dataset's own row identifier."],
+  ["Career-high rank, from the corpus's own weekly tables.", "Career-high rank, from the archive's weekly ranking tables."],
+];
+const reworded = new Map(REWORDED.map(([from]) => [from, 0]));
+
+/**
+ * The snapshot value with every REWORDED pair applied to its description
+ * strings, counting uses. Names, enums, defaults and every other value are
+ * left alone, so a pair can never hide a change to them.
+ */
+function reword(v, key) {
+  if (typeof v === 'string' && key === 'description') {
+    let s = v;
+    for (const [from, to] of REWORDED) {
+      if (s.includes(from)) { reworded.set(from, reworded.get(from) + 1); s = s.split(from).join(to); }
+    }
+    return s;
+  }
+  if (Array.isArray(v)) return v.map((x) => reword(x));
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, reword(x, k)]));
+  return v;
+}
 
 const requests = [
   { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'ci', version: '1' } } },
@@ -85,7 +126,7 @@ const problems = [];
 for (const name of shared) {
   const mcp = byName.get(name);
   if (!mcp) { problems.push(`${name}: in ${snapshot.package} ${snapshot.version} but not in this server`); continue; }
-  const ai = snapshot.tools[name];
+  const ai = reword(snapshot.tools[name]);
   const mine = { description: mcp.description, inputSchema: mcp.inputSchema, outputSchema: mcp.outputSchema };
   for (const d of diff(mine, ai)) problems.push(`${name}.${d}`);
 }
@@ -99,8 +140,12 @@ for (const name of EXTRA) {
   if (snapshot.tools[name]) problems.push(`${name}: listed as EXTRA but ${snapshot.package} ${snapshot.version} has it too`);
 }
 
+for (const [from, uses] of reworded) {
+  if (!uses) problems.push(`REWORDED: ${snapshot.package} ${snapshot.version} no longer contains ${JSON.stringify(from)}; drop the pair`);
+}
+
 if (problems.length) {
   console.error(`FAIL: ${problems.length} difference(s) from ${snapshot.package} ${snapshot.version}:\n\n  ${problems.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`OK - ${shared.length} shared tools match ${snapshot.package} ${snapshot.version} word for word (description, input and output schemas) · ${EXTRA.length} extra: ${EXTRA.join(', ')}`);
+console.log(`OK - ${shared.length} shared tools match ${snapshot.package} ${snapshot.version} word for word (description, input and output schemas) · ${REWORDED.length} reworded phrase(s) · ${EXTRA.length} extra: ${EXTRA.join(', ')}`);

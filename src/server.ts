@@ -47,7 +47,7 @@ import {
 } from 'livetennisapi';
 import { z } from 'zod';
 
-export const VERSION = '1.6.4';
+export const VERSION = '1.6.5';
 
 type ToolResult = {
   content: { type: 'text'; text: string }[];
@@ -88,13 +88,13 @@ const messageField = z
   .describe('Human-readable summary of the result, safe to relay to the user verbatim.');
 
 const MatchOut = z.object({
-  // Nullable, not required: the upstream type allows a match without an id, and
+  // Nullable, not required: the SDK type allows a match without an id, and
   // asserting otherwise would make the schema lie rather than make the data safe.
   id: z.number().nullable().describe('Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds.'),
   tour: z
     .string()
     .nullable()
-    .describe('atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events).'),
+    .describe('atp, wta, challenger, itf or juniors. Null when no tour is recorded (exhibitions, team events).'),
   tournament: z.string().nullable().describe('Event name, e.g. "Wimbledon".'),
   tournament_id: z.string().nullable().describe('Stable tournament id. Pass to get_tournament. Null where uncatalogued.'),
   round: z.string().nullable().describe('Round within the event, e.g. "QF".'),
@@ -109,7 +109,7 @@ const MatchOut = z.object({
   scheduled_time: z
     .string()
     .nullable()
-    .describe('Scheduled start, UTC ISO-8601. Null when the feed has not published one.'),
+    .describe('Scheduled start, UTC ISO-8601. Null when no start time is set yet.'),
   surface: z.string().nullable().describe('Court surface, e.g. hard, clay, grass.'),
   indoor: z.boolean().nullable().describe('True when played indoors.'),
   serving: z.number().nullable().describe('1 or 2 while a point is in play, otherwise null.'),
@@ -202,8 +202,8 @@ const TournamentOut = z.object({
     .nullable()
     .describe(
       'Tournament category (grand_slam, masters_1000, tour_finals, atp_500, atp_250, wta_1000, ' +
-        'wta_500, wta_250, wta_125, challenger, itf, juniors). Set only where the catalogues agree ' +
-        'unambiguously. Null otherwise, never derived from the name.',
+        'wta_500, wta_250, wta_125, challenger, itf, juniors). Set only where the category is ' +
+        'unambiguous. Null otherwise, never derived from the name.',
     ),
 });
 
@@ -231,7 +231,7 @@ const ArchiveMatchOut = z.object({
     .nullable()
     .describe("The tournament START date. Per-match dates do not exist in this era's records."),
   round: z.string().nullable().describe('Round code: F, SF, QF, R16 … Q1-Q4.'),
-  level: z.string().nullable().describe('Source tier code: G, M, A, F, D, C, O, or a futures category code.'),
+  level: z.string().nullable().describe('Tier code: G, M, A, F, D, C, O, or a futures category code.'),
   surface: z.string().nullable().describe('Court surface.'),
   score: z.string().nullable().describe('The final score as published, e.g. "6-4 7-6(5)", "6-3 RET", "W/O".'),
   outcome: z
@@ -253,7 +253,7 @@ const ArchiveBioOut = z.object({
   dob: z.string().nullable().describe('Date of birth, ISO date.'),
   country: z.string().nullable().describe('3-letter country code.'),
   height_cm: z.number().nullable().describe('Height in cm.'),
-  career_high_rank: z.number().nullable().describe("Career-high rank, from the corpus's own weekly tables."),
+  career_high_rank: z.number().nullable().describe("Career-high rank, from the archive's weekly ranking tables."),
   career_high_date: z.string().nullable().describe('The earliest week the career-high rank was reached.'),
 });
 
@@ -298,7 +298,7 @@ const StatsSideOut = z.object({
     .record(z.number().nullable())
     .nullable()
     .describe(
-      'Counted upstream: aces, double_faults, the serve split, winners/unforced errors where covered. ' +
+      'Counted per match: aces, double_faults, the serve split, winners/unforced errors where covered. ' +
         'Absent fields are omitted, never zero-filled. Quantities named in both families are computed two ' +
         'different ways: a cross-check, not a duplication.',
     ),
@@ -1108,7 +1108,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         level: z
           .string()
           .optional()
-          .describe('Source tier code: G=grand slam, M=masters, A=tour, F=finals, D=davis cup, C=challenger, O=olympics. Or a futures category code (e.g. 15).'),
+          .describe('Tier code: G=grand slam, M=masters, A=tour, F=finals, D=davis cup, C=challenger, O=olympics. Or a futures category code (e.g. 15).'),
         limit: limitField(200, 20, 'results'),
       },
       outputSchema: {
@@ -1256,7 +1256,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
             by_level: z
               .record(z.object({ wins: z.number().nullable(), losses: z.number().nullable() }))
               .nullable()
-              .describe('W-L per source tier code.'),
+              .describe('W-L per tier code.'),
           })
           .optional()
           .describe('The W-L record.'),
@@ -1883,7 +1883,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Match statistics',
       description:
-        "In-play (or final) statistics for one match, in TWO families kept separate on purpose. DERIVED is rebuilt from the point-by-point record (holds/breaks, break points, service/return points). MEASURED is counted upstream. It includes what no point record can yield: aces, double faults, the serve split, winners/unforced errors. Measured coverage varies by tour. Absent fields are omitted, never zero-filled. Requires the ULTRA plan.",
+        "In-play (or final) statistics for one match, in TWO families kept separate on purpose. DERIVED is rebuilt from the point-by-point record (holds/breaks, break points, service/return points). MEASURED is counted per match. It includes what no point record can yield: aces, double faults, the serve split, winners/unforced errors. Measured coverage varies by tour. Absent fields are omitted, never zero-filled. Requires the ULTRA plan.",
       inputSchema: { match_id: matchIdField },
       outputSchema: {
         ok: okField,
@@ -1992,7 +1992,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Charting: player career profile',
       description:
-        "Career shot-level profile from the Match Charting Project, summed over the player's charted matches. Serve placement (deuce/ad x wide/body/T), return depth and outcomes, net play, and clutch break/game/set-point serving. Also winners and errors by wing, and rally-length tendencies. COVERAGE IS CURATED, not full-slate: 11,646 charted matches back to the 1960s, concentrated on the majors. An ambiguous name returns the candidates to choose from. Requires the ULTRA plan.",
+        "Career profile from shot-level charting data, summed over the player's charted matches. Serve placement (deuce/ad x wide/body/T), return depth and outcomes, net play, and clutch break/game/set-point serving. Also winners and errors by wing, and rally-length tendencies. COVERAGE IS CURATED, not full-slate: 11,646 charted matches back to the 1960s, concentrated on the majors. An ambiguous name returns the candidates to choose from. Requires the ULTRA plan.",
       inputSchema: {
         name: z.string().min(3).describe('Player name fragment, min 3 chars. Must resolve to one charted person.'),
         gender: z.enum(['men', 'women']).optional().describe('Disambiguates a name charted on both tours.'),
@@ -2018,7 +2018,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         const who = player?.name ?? name;
         return {
           text:
-            `${who} — ${res.matches_charted ?? '?'} charted match(es), summed from the Match Charting Project ` +
+            `${who} — ${res.matches_charted ?? '?'} charted match(es), summed from shot-level charting data ` +
             `(curated coverage, not full-slate).\nStat families: ${Object.keys(families).join(', ') || 'none'}. ` +
             'The full sums are in the structured content.',
           data: {
@@ -2036,7 +2036,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
     {
       title: 'Charting: one match, every stat family',
       description:
-        "Every Match Charting Project stat family for ONE charted match, both players, with the per-set split (set 1, set 2, ..., Total) exactly as charted. Charting ids are their own id space (1960 to 2026). Most of these matches have no counterpart in the live tables. Requires the ULTRA plan.",
+        "Every charting stat family for ONE charted match, both players, with the per-set split (set 1, set 2, ..., Total) exactly as charted. Charting ids are their own id space (1960 to 2026). Most of these matches have no counterpart in the live tables. Requires the ULTRA plan.",
       inputSchema: {
         charting_match_id: z.number().int().describe('Charting match id, in its own id space. Not a match_id.'),
       },
@@ -2044,7 +2044,7 @@ export function createServer(apiKey: string, baseUrl?: string): McpServer {
         ok: okField,
         message: messageField,
         charting_match_id: z.number().nullable().optional().describe('The charted match.'),
-        mcp_id: z.string().nullable().optional().describe("The Match Charting Project's own row identifier."),
+        mcp_id: z.string().nullable().optional().describe("The charting dataset's own row identifier."),
         gender: z.string().nullable().optional(),
         players: z.record(z.any()).nullable().optional().describe('Both players as charted.'),
         families: z.record(z.any()).optional().describe('Every stat family, per player, with the per-set split.'),
