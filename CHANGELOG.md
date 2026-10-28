@@ -84,8 +84,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - **`player_stats` (PRO), one new read-only tool** (24 → 25). It reads
   `GET /players/{playerId}/stats` with `player_id`, `from`, `to`, `surface`,
-  `level` and `last`. It returns one player's record over our completed
-  singles matches, 2023 onward: W/L overall, over the last 12 months and by
+  `level` and `last`. It returns one player's record over completed
+  singles matches from 2023 onward: W/L overall, over the last 12 months and by
   surface, venue, level and season. It also returns the set-based record,
   withdrawals and the last N matches, with the score from the player's side.
   On ULTRA it passes `serve_return` through, the summed serve and return
