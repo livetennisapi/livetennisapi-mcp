@@ -1,16 +1,16 @@
 {
   "package": "livetennisapi-ai",
-  "version": "1.2.1",
+  "version": "1.3.1",
   "tools": {
     "check_api_status": {
       "description": "Check whether the Live Tennis API is reachable and which plan the configured key is on. Use it to find out why other tools are refusing data. Works with no key.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
-        "properties": {},
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "properties": {}
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -22,39 +22,39 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "reachable": {
-            "type": "boolean",
-            "description": "True when the API answered its health check."
+            "description": "True when the API answered its health check.",
+            "type": "boolean"
           },
           "api_version": {
+            "description": "API version reported by the health check.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "API version reported by the health check."
+            ]
           },
           "tier": {
+            "description": "Detected plan: FREE, BASIC, PRO or ULTRA. Null when no key is configured.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "Detected plan: FREE, BASIC, PRO or ULTRA. Null when no key is configured."
+            ]
           },
           "has_key": {
-            "type": "boolean",
-            "description": "Whether a key was configured for this tool set."
+            "description": "Whether a key was configured for this tool set.",
+            "type": "boolean"
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_archive_career": {
       "description": "One player's whole career over the results archive (1968 to 2022). W-L record in total and by surface/level/year, titles, and summed serve statistics. The corpus records serve stats from 1991 only, so matches_with_stats says how many matches the serve block covers. The name must resolve to one person. An ambiguous fragment returns the candidate list to choose from. Requires the BASIC plan or any History plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "name": {
@@ -65,11 +65,10 @@
         },
         "required": [
           "name"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -81,65 +80,69 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "player_name": {
+            "description": "The resolved player.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "The resolved player."
+            ]
           },
           "span": {
+            "description": "Career span inside the archive.",
             "type": "object",
             "properties": {
               "first": {
+                "description": "First archive match date.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "First archive match date."
+                ]
               },
               "last": {
+                "description": "Last archive match date.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Last archive match date."
+                ]
               }
             },
             "required": [
               "first",
               "last"
             ],
-            "additionalProperties": false,
-            "description": "Career span inside the archive."
+            "additionalProperties": false
           },
           "record": {
+            "description": "The W-L record.",
             "type": "object",
             "properties": {
               "wins": {
+                "description": "Career wins.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Career wins."
+                ]
               },
               "losses": {
+                "description": "Career losses.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Career losses."
+                ]
               },
               "titles": {
+                "description": "Finals won (excluding abandoned finals).",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Finals won (excluding abandoned finals)."
+                ]
               },
               "by_surface": {
                 "anyOf": [
                   {
                     "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
                     "additionalProperties": {
                       "type": "object",
                       "properties": {
@@ -173,6 +176,9 @@
                 "anyOf": [
                   {
                     "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
                     "additionalProperties": {
                       "type": "object",
                       "properties": {
@@ -210,10 +216,10 @@
               "by_surface",
               "by_level"
             ],
-            "additionalProperties": false,
-            "description": "The W-L record."
+            "additionalProperties": false
           },
           "by_year": {
+            "description": "Per-season W-L.",
             "type": "array",
             "items": {
               "type": "object",
@@ -243,13 +249,16 @@
                 "losses"
               ],
               "additionalProperties": false
-            },
-            "description": "Per-season W-L."
+            }
           },
           "serve": {
+            "description": "Summed serve stats + derived ratios. matches_with_stats states the coverage. Ratios are null where the denominator is zero.",
             "anyOf": [
               {
                 "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
                 "additionalProperties": {
                   "type": [
                     "number",
@@ -260,35 +269,35 @@
               {
                 "type": "null"
               }
-            ],
-            "description": "Summed serve stats + derived ratios. matches_with_stats states the coverage. Ratios are null where the denominator is zero."
+            ]
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_archive_match": {
       "description": "One result from the results archive (1968 to 2022), with per-match serve statistics where the era recorded them. Stats are null for most rows before 1991, never synthesised. Requires the BASIC plan or any History plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "archive_match_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Archive match id, as returned by search_archive_matches."
           }
         },
         "required": [
           "archive_match_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -300,136 +309,137 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "result": {
+            "description": "The archive result.",
             "type": "object",
             "properties": {
               "id": {
+                "description": "Archive match id. Pass to get_archive_match for the detail read with stats.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Archive match id. Pass to get_archive_match for the detail read with stats."
+                ]
               },
               "tour": {
+                "description": "atp or wta. The results archive covers those two tours.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "atp or wta. The results archive covers those two tours."
+                ]
               },
               "tournament": {
+                "description": "Tournament name.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Tournament name."
+                ]
               },
               "event_date": {
+                "description": "The tournament START date. Per-match dates do not exist in this era's records.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "The tournament START date. Per-match dates do not exist in this era's records."
+                ]
               },
               "round": {
+                "description": "Round code: F, SF, QF, R16 … Q1-Q4.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Round code: F, SF, QF, R16 … Q1-Q4."
+                ]
               },
               "level": {
+                "description": "Source tier code: G, M, A, F, D, C, O, or a futures category code.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Source tier code: G, M, A, F, D, C, O, or a futures category code."
+                ]
               },
               "surface": {
+                "description": "Court surface.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Court surface."
+                ]
               },
               "score": {
+                "description": "The final score as published, e.g. \"6-4 7-6(5)\", \"6-3 RET\", \"W/O\".",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "The final score as published, e.g. \"6-4 7-6(5)\", \"6-3 RET\", \"W/O\"."
+                ]
               },
               "outcome": {
+                "description": "completed, retired, walkover, default or abandoned. Parsed, null when unparseable.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "completed, retired, walkover, default or abandoned. Parsed, null when unparseable."
+                ]
               },
               "winner": {
                 "type": "object",
                 "properties": {
                   "name": {
+                    "description": "Player name as the corpus records it.",
                     "type": [
                       "string",
                       "null"
-                    ],
-                    "description": "Player name as the corpus records it."
+                    ]
                   },
                   "country": {
+                    "description": "3-letter country code.",
                     "type": [
                       "string",
                       "null"
-                    ],
-                    "description": "3-letter country code."
+                    ]
                   },
                   "rank": {
+                    "description": "Rank AT THE TIME of the match, as published.",
                     "type": [
                       "number",
                       "null"
-                    ],
-                    "description": "Rank AT THE TIME of the match, as published."
+                    ]
                   },
                   "seed": {
+                    "description": "Seeding, where seeded.",
                     "type": [
                       "number",
                       "null"
-                    ],
-                    "description": "Seeding, where seeded."
+                    ]
                   },
                   "player_id": {
+                    "description": "Corpus person id. Join it to search_archive_players results for bios. NOT a roster player id.",
                     "type": [
                       "number",
                       "null"
-                    ],
-                    "description": "Corpus person id. Join it to search_archive_players results for bios. NOT a roster player id."
+                    ]
                   },
                   "hand": {
+                    "description": "\"R\" or \"L\".",
                     "type": [
                       "string",
                       "null"
-                    ],
-                    "description": "\"R\" or \"L\"."
+                    ]
                   },
                   "height_cm": {
+                    "description": "Height in cm, where recorded.",
                     "type": [
                       "number",
                       "null"
-                    ],
-                    "description": "Height in cm, where recorded."
+                    ]
                   },
                   "age": {
+                    "description": "Age at the time of the match.",
                     "type": [
                       "number",
                       "null"
-                    ],
-                    "description": "Age at the time of the match."
+                    ]
                   },
                   "entry": {
+                    "description": "Draw entry where recorded (WC, Q, LL, ...). Null for direct acceptances.",
                     "type": [
                       "string",
                       "null"
-                    ],
-                    "description": "Draw entry where recorded (WC, Q, LL, ...). Null for direct acceptances."
+                    ]
                   }
                 },
                 "required": [
@@ -450,31 +460,67 @@
                 "type": "object",
                 "properties": {
                   "name": {
-                    "$ref": "#/properties/result/properties/winner/properties/name"
+                    "description": "Player name as the corpus records it.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "country": {
-                    "$ref": "#/properties/result/properties/winner/properties/country"
+                    "description": "3-letter country code.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "rank": {
-                    "$ref": "#/properties/result/properties/winner/properties/rank"
+                    "description": "Rank AT THE TIME of the match, as published.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
                   },
                   "seed": {
-                    "$ref": "#/properties/result/properties/winner/properties/seed"
+                    "description": "Seeding, where seeded.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
                   },
                   "player_id": {
-                    "$ref": "#/properties/result/properties/winner/properties/player_id"
+                    "description": "Corpus person id. Join it to search_archive_players results for bios. NOT a roster player id.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
                   },
                   "hand": {
-                    "$ref": "#/properties/result/properties/winner/properties/hand"
+                    "description": "\"R\" or \"L\".",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "height_cm": {
-                    "$ref": "#/properties/result/properties/winner/properties/height_cm"
+                    "description": "Height in cm, where recorded.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
                   },
                   "age": {
-                    "$ref": "#/properties/result/properties/winner/properties/age"
+                    "description": "Age at the time of the match.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
                   },
                   "entry": {
-                    "$ref": "#/properties/result/properties/winner/properties/entry"
+                    "description": "Draw entry where recorded (WC, Q, LL, ...). Null for direct acceptances.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   }
                 },
                 "required": [
@@ -505,10 +551,10 @@
               "winner",
               "loser"
             ],
-            "additionalProperties": false,
-            "description": "The archive result."
+            "additionalProperties": false
           },
           "stats": {
+            "description": "Per-match serve statistics (aces, double_faults, serve_points, first_in, first_won, second_won, serve_games, bp_saved, bp_faced). Null for most pre-1991 rows.",
             "anyOf": [
               {
                 "type": "object",
@@ -517,6 +563,9 @@
                     "anyOf": [
                       {
                         "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
                         "additionalProperties": {
                           "type": [
                             "number",
@@ -534,6 +583,9 @@
                     "anyOf": [
                       {
                         "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
                         "additionalProperties": {
                           "type": [
                             "number",
@@ -557,35 +609,35 @@
               {
                 "type": "null"
               }
-            ],
-            "description": "Per-match serve statistics (aces, double_faults, serve_points, first_in, first_won, second_won, serve_games, bp_saved, bp_faced). Null for most pre-1991 rows."
+            ]
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_charting_match": {
       "description": "Every Match Charting Project stat family for ONE charted match, both players, with the per-set split (set 1, set 2, ..., Total) exactly as charted. Charting ids are their own id space (1960 to 2026). Most of these matches have no counterpart in the live tables. Requires the ULTRA plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "charting_match_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Charting match id, in its own id space. Not a match_id."
           }
         },
         "required": [
           "charting_match_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -597,18 +649,18 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "charting_match_id": {
+            "description": "The charted match.",
             "type": [
               "number",
               "null"
-            ],
-            "description": "The charted match."
+            ]
           },
           "mcp_id": {
+            "description": "The Match Charting Project's own row identifier.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "The Match Charting Project's own row identifier."
+            ]
           },
           "gender": {
             "type": [
@@ -617,34 +669,40 @@
             ]
           },
           "players": {
+            "description": "Both players as charted.",
             "anyOf": [
               {
                 "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
                 "additionalProperties": {}
               },
               {
                 "type": "null"
               }
-            ],
-            "description": "Both players as charted."
+            ]
           },
           "families": {
+            "description": "Every stat family, per player, with the per-set split.",
             "type": "object",
-            "additionalProperties": {},
-            "description": "Every stat family, per player, with the per-set split."
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_charting_player": {
       "description": "Career shot-level profile from the Match Charting Project, summed over the player's charted matches. Serve placement (deuce/ad x wide/body/T), return depth and outcomes, net play, and clutch break/game/set-point serving. Also winners and errors by wing, and rally-length tendencies. COVERAGE IS CURATED, not full-slate: 11,646 charted matches back to the 1960s, concentrated on the majors. An ambiguous name returns the candidates to choose from. Requires the ULTRA plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "name": {
@@ -653,21 +711,20 @@
             "description": "Player name fragment, min 3 chars. Must resolve to one charted person."
           },
           "gender": {
+            "description": "Disambiguates a name charted on both tours.",
             "type": "string",
             "enum": [
               "men",
               "women"
-            ],
-            "description": "Disambiguates a name charted on both tours."
+            ]
           }
         },
         "required": [
           "name"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -679,51 +736,58 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "player": {
+            "description": "The resolved charted player.",
             "anyOf": [
               {
                 "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
                 "additionalProperties": {}
               },
               {
                 "type": "null"
               }
-            ],
-            "description": "The resolved charted player."
+            ]
           },
           "matches_charted": {
+            "description": "The sample every summed field covers.",
             "type": [
               "number",
               "null"
-            ],
-            "description": "The sample every summed field covers."
+            ]
           },
           "coverage": {
+            "description": "A reminder that charting coverage is curated, not full-slate.",
             "type": [
               "string",
               "null"
-            ],
-            "description": "A reminder that charting coverage is curated, not full-slate."
+            ]
           },
           "families": {
+            "description": "Per-family summed numeric columns: raw sums over the player's charted Total rows.",
             "type": "object",
-            "additionalProperties": {},
-            "description": "Per-family summed numeric columns: raw sums over the player's charted Total rows."
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_fixtures": {
       "description": "Upcoming scheduled tennis fixtures, earliest first. This is the forward schedule, filterable by tour. Use this for \"what is on this week\". Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "tour": {
+            "description": "Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are excluded whenever the filter is used.",
             "type": "string",
             "enum": [
               "atp",
@@ -731,21 +795,19 @@
               "challenger",
               "itf",
               "juniors"
-            ],
-            "description": "Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are excluded whenever the filter is used."
+            ]
           },
           "limit": {
+            "default": 20,
+            "description": "Maximum fixtures to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 20,
-            "description": "Maximum fixtures to return (1-200)."
+            "maximum": 200
           }
-        },
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -757,51 +819,52 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "fixtures": {
+            "description": "Scheduled fixtures, earliest first.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "event_date": {
+                  "description": "Scheduled date, YYYY-MM-DD.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Scheduled date, YYYY-MM-DD."
+                  ]
                 },
                 "start_time": {
+                  "description": "Scheduled start, UTC ISO-8601. Null until the order of play assigns a time.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Scheduled start, UTC ISO-8601. Null until the order of play assigns a time."
+                  ]
                 },
                 "tournament": {
+                  "description": "Event name.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Event name."
+                  ]
                 },
                 "round": {
+                  "description": "Round within the event.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round within the event."
+                  ]
                 },
                 "player1": {
+                  "description": "Name of player 1.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name of player 1."
+                  ]
                 },
                 "player2": {
+                  "description": "Name of player 2.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name of player 2."
+                  ]
                 }
               },
               "required": [
@@ -813,21 +876,20 @@
                 "player2"
               ],
               "additionalProperties": false
-            },
-            "description": "Scheduled fixtures, earliest first."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_h2h": {
       "description": "The all-time record between two players, across BOTH halves of the product. That is the results archive (1968 to 2022) plus our own completed matches (2023 onward). Names are the keys. An ambiguous fragment returns the candidate list to choose from, and nothing is guessed. Totals count only meetings with a known winner. Walkovers and retirements are part of the record, and each meeting carries its outcome. Requires the BASIC plan or any History plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "player1": {
@@ -844,11 +906,10 @@
         "required": [
           "player1",
           "player2"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -860,23 +921,24 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "players": {
+            "description": "The resolved names. Null when no player matches the fragments.",
             "anyOf": [
               {
                 "type": "object",
                 "properties": {
                   "p1": {
+                    "description": "Resolved name for player1.",
                     "type": [
                       "string",
                       "null"
-                    ],
-                    "description": "Resolved name for player1."
+                    ]
                   },
                   "p2": {
+                    "description": "Resolved name for player2.",
                     "type": [
                       "string",
                       "null"
-                    ],
-                    "description": "Resolved name for player2."
+                    ]
                   }
                 },
                 "required": [
@@ -888,39 +950,39 @@
               {
                 "type": "null"
               }
-            ],
-            "description": "The resolved names. Null when no player matches the fragments."
+            ]
           },
           "totals": {
+            "description": "The headline record.",
             "type": "object",
             "properties": {
               "p1_wins": {
+                "description": "Wins for player1 (of the request).",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Wins for player1 (of the request)."
+                ]
               },
               "p2_wins": {
+                "description": "Wins for player2 (of the request).",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Wins for player2 (of the request)."
+                ]
               },
               "meetings": {
+                "description": "Meetings with a known winner.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Meetings with a known winner."
+                ]
               },
               "undecided": {
+                "description": "Meetings with no derivable winner. Never counted in wins.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Meetings with no derivable winner. Never counted in wins."
+                ]
               }
             },
             "required": [
@@ -929,11 +991,14 @@
               "meetings",
               "undecided"
             ],
-            "additionalProperties": false,
-            "description": "The headline record."
+            "additionalProperties": false
           },
           "by_surface": {
+            "description": "Decided wins per surface. The keys are surface names plus \"unknown\".",
             "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
             "additionalProperties": {
               "type": "object",
               "properties": {
@@ -955,76 +1020,76 @@
                 "p2"
               ],
               "additionalProperties": false
-            },
-            "description": "Decided wins per surface. The keys are surface names plus \"unknown\"."
+            }
           },
           "meetings": {
+            "description": "Individual meetings, newest first, capped at 200.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "era": {
+                  "description": "\"archive\" (results archive, 1968-2022) or \"current\" (our own completed matches, 2023 onward).",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "\"archive\" (results archive, 1968-2022) or \"current\" (our own completed matches, 2023 onward)."
+                  ]
                 },
                 "date": {
+                  "description": "Match date (current era) or tournament start date (archive era).",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Match date (current era) or tournament start date (archive era)."
+                  ]
                 },
                 "tournament": {
+                  "description": "Tournament name.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Tournament name."
+                  ]
                 },
                 "round": {
+                  "description": "Round.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round."
+                  ]
                 },
                 "surface": {
+                  "description": "Court surface.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Court surface."
+                  ]
                 },
                 "score": {
+                  "description": "Final score (archive rows only. Read current rows from get_match).",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Final score (archive rows only. Read current rows from get_match)."
+                  ]
                 },
                 "outcome": {
+                  "description": "completed, retired, walkover, ... Exclude non-completed yourself if needed.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "completed, retired, walkover, ... Exclude non-completed yourself if needed."
+                  ]
                 },
                 "winner": {
+                  "description": "1 or 2 OF THE REQUEST (player1/player2 as you passed them), not of the underlying match row.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "1 or 2 OF THE REQUEST (player1/player2 as you passed them), not of the underlying match row."
+                  ]
                 },
                 "match_id": {
+                  "description": "Our match id (current era rows). Pass to get_match.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Our match id (current era rows). Pass to get_match."
+                  ]
                 }
               },
               "required": [
@@ -1039,24 +1104,24 @@
                 "match_id"
               ],
               "additionalProperties": false
-            },
-            "description": "Individual meetings, newest first, capped at 200."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_live_matches": {
       "description": "List tennis matches currently in progress, with live scores. Covers ATP, WTA, Challenger, ITF and juniors. Use this for \"what tennis is on right now\". Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "tour": {
+            "description": "Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are excluded whenever the filter is used.",
             "type": "string",
             "enum": [
               "atp",
@@ -1064,35 +1129,35 @@
               "challenger",
               "itf",
               "juniors"
-            ],
-            "description": "Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are excluded whenever the filter is used."
+            ]
           },
           "player": {
+            "description": "Player ids (from search_players), max 50. Keeps matches where ANY listed player is either participant.",
+            "maxItems": 50,
             "type": "array",
             "items": {
-              "type": "integer"
-            },
-            "maxItems": 50,
-            "description": "Player ids (from search_players), max 50. Keeps matches where ANY listed player is either participant."
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
           },
           "country": {
+            "description": "Either participant's country: the lowercase 3-letter IOC-style code the Player object returns (e.g. ned, sui, gre), NOT ISO-3166. Players with no recorded country never match.",
             "type": "string",
             "minLength": 3,
-            "maxLength": 3,
-            "description": "Either participant's country: the lowercase 3-letter IOC-style code the Player object returns (e.g. ned, sui, gre), NOT ISO-3166. Players with no recorded country never match."
+            "maxLength": 3
           },
           "limit": {
+            "default": 20,
+            "description": "Maximum matches to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 20,
-            "description": "Maximum matches to return (1-200)."
+            "maximum": 200
           }
-        },
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -1104,156 +1169,157 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "matches": {
+            "description": "The live matches, most relevant first.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "id": {
+                  "description": "Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds."
+                  ]
                 },
                 "tour": {
+                  "description": "atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events).",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events)."
+                  ]
                 },
                 "tournament": {
+                  "description": "Event name, e.g. \"Wimbledon\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Event name, e.g. \"Wimbledon\"."
+                  ]
                 },
                 "tournament_id": {
+                  "description": "Stable tournament id. Pass to get_tournament. Null where uncatalogued.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Stable tournament id. Pass to get_tournament. Null where uncatalogued."
+                  ]
                 },
                 "round": {
+                  "description": "Round within the event, e.g. \"QF\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round within the event, e.g. \"QF\"."
+                  ]
                 },
                 "round_code": {
+                  "description": "Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed."
+                  ]
                 },
                 "player1": {
+                  "description": "Name of player 1.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name of player 1."
+                  ]
                 },
                 "player2": {
+                  "description": "Name of player 2.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name of player 2."
+                  ]
                 },
                 "score": {
+                  "description": "Formatted score line, e.g. \"6-4 3-6 2-1\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Formatted score line, e.g. \"6-4 3-6 2-1\"."
+                  ]
                 },
                 "status": {
+                  "description": "One of live, upcoming, completed or cancelled.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "One of live, upcoming, completed or cancelled."
+                  ]
                 },
                 "scheduled_time": {
+                  "description": "Scheduled start, UTC ISO-8601. Null when the feed has not published one.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Scheduled start, UTC ISO-8601. Null when the feed has not published one."
+                  ]
                 },
                 "surface": {
+                  "description": "Court surface, e.g. hard, clay, grass.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Court surface, e.g. hard, clay, grass."
+                  ]
                 },
                 "indoor": {
+                  "description": "True when played indoors.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "True when played indoors."
+                  ]
                 },
                 "serving": {
+                  "description": "1 or 2 while a point is in play, otherwise null.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "1 or 2 while a point is in play, otherwise null."
+                  ]
                 },
                 "winner": {
+                  "description": "1 or 2 once decided, otherwise null.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "1 or 2 once decided, otherwise null."
+                  ]
                 },
                 "event_status": {
+                  "description": "How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here."
+                  ]
                 },
                 "event_status_updated_at": {
+                  "description": "The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). Null while the status has never changed since the field was introduced. Never backfilled.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). Null while the status has never changed since the field was introduced. Never backfilled."
+                  ]
                 },
                 "withdrew": {
+                  "description": "Completed matches only: which player retired or conceded the walkover, 1 or 2. Null means \"not a withdrawal, or no evidence\", never a guess.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Completed matches only: which player retired or conceded the walkover, 1 or 2. Null means \"not a withdrawal, or no evidence\", never a guess."
+                  ]
                 },
                 "has_analysis": {
+                  "description": "Whether a model thesis or profile exists for this match (added 2026-09-02, every tier). Filter on this before calling get_match_analysis, which reports the same absence. Null only when the server predates the field.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "Whether a model thesis or profile exists for this match (added 2026-09-02, every tier). Filter on this before calling get_match_analysis, which reports the same absence. Null only when the server predates the field."
+                  ]
                 },
                 "has_market": {
+                  "description": "Whether a match-winner market is mapped to this match (added 2026-09-02, every tier). Filter on this before calling get_match_odds, which reports the same absence. Null only when the server predates the field.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "Whether a match-winner market is mapped to this match (added 2026-09-02, every tier). Filter on this before calling get_match_odds, which reports the same absence. Null only when the server predates the field."
+                  ]
                 },
                 "win_probability_p1": {
+                  "description": "Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise."
+                  ]
                 }
               },
               "required": [
@@ -1280,35 +1346,35 @@
                 "win_probability_p1"
               ],
               "additionalProperties": false
-            },
-            "description": "The live matches, most relevant first."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_match": {
       "description": "Full detail for one match by id: players, score, surface, round and status. Includes market prices on PRO and model analysis on ULTRA. Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "match_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Match id, as returned by get_live_matches, get_upcoming_matches or get_recent_results."
           }
         },
         "required": [
           "match_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -1320,154 +1386,155 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "match": {
+            "description": "The match.",
             "type": "object",
             "properties": {
               "id": {
+                "description": "Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds."
+                ]
               },
               "tour": {
+                "description": "atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events).",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events)."
+                ]
               },
               "tournament": {
+                "description": "Event name, e.g. \"Wimbledon\".",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Event name, e.g. \"Wimbledon\"."
+                ]
               },
               "tournament_id": {
+                "description": "Stable tournament id. Pass to get_tournament. Null where uncatalogued.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Stable tournament id. Pass to get_tournament. Null where uncatalogued."
+                ]
               },
               "round": {
+                "description": "Round within the event, e.g. \"QF\".",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Round within the event, e.g. \"QF\"."
+                ]
               },
               "round_code": {
+                "description": "Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed."
+                ]
               },
               "player1": {
+                "description": "Name of player 1.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Name of player 1."
+                ]
               },
               "player2": {
+                "description": "Name of player 2.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Name of player 2."
+                ]
               },
               "score": {
+                "description": "Formatted score line, e.g. \"6-4 3-6 2-1\".",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Formatted score line, e.g. \"6-4 3-6 2-1\"."
+                ]
               },
               "status": {
+                "description": "One of live, upcoming, completed or cancelled.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "One of live, upcoming, completed or cancelled."
+                ]
               },
               "scheduled_time": {
+                "description": "Scheduled start, UTC ISO-8601. Null when the feed has not published one.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Scheduled start, UTC ISO-8601. Null when the feed has not published one."
+                ]
               },
               "surface": {
+                "description": "Court surface, e.g. hard, clay, grass.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Court surface, e.g. hard, clay, grass."
+                ]
               },
               "indoor": {
+                "description": "True when played indoors.",
                 "type": [
                   "boolean",
                   "null"
-                ],
-                "description": "True when played indoors."
+                ]
               },
               "serving": {
+                "description": "1 or 2 while a point is in play, otherwise null.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "1 or 2 while a point is in play, otherwise null."
+                ]
               },
               "winner": {
+                "description": "1 or 2 once decided, otherwise null.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "1 or 2 once decided, otherwise null."
+                ]
               },
               "event_status": {
+                "description": "How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here."
+                ]
               },
               "event_status_updated_at": {
+                "description": "The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). Null while the status has never changed since the field was introduced. Never backfilled.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). Null while the status has never changed since the field was introduced. Never backfilled."
+                ]
               },
               "withdrew": {
+                "description": "Completed matches only: which player retired or conceded the walkover, 1 or 2. Null means \"not a withdrawal, or no evidence\", never a guess.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Completed matches only: which player retired or conceded the walkover, 1 or 2. Null means \"not a withdrawal, or no evidence\", never a guess."
+                ]
               },
               "has_analysis": {
+                "description": "Whether a model thesis or profile exists for this match (added 2026-09-02, every tier). Filter on this before calling get_match_analysis, which reports the same absence. Null only when the server predates the field.",
                 "type": [
                   "boolean",
                   "null"
-                ],
-                "description": "Whether a model thesis or profile exists for this match (added 2026-09-02, every tier). Filter on this before calling get_match_analysis, which reports the same absence. Null only when the server predates the field."
+                ]
               },
               "has_market": {
+                "description": "Whether a match-winner market is mapped to this match (added 2026-09-02, every tier). Filter on this before calling get_match_odds, which reports the same absence. Null only when the server predates the field.",
                 "type": [
                   "boolean",
                   "null"
-                ],
-                "description": "Whether a match-winner market is mapped to this match (added 2026-09-02, every tier). Filter on this before calling get_match_odds, which reports the same absence. Null only when the server predates the field."
+                ]
               },
               "win_probability_p1": {
+                "description": "Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise."
+                ]
               }
             },
             "required": [
@@ -1493,18 +1560,18 @@
               "has_market",
               "win_probability_p1"
             ],
-            "additionalProperties": false,
-            "description": "The match."
+            "additionalProperties": false
           },
           "market": {
+            "description": "Match-winner market. Requires the PRO plan, absent otherwise.",
             "type": "object",
             "properties": {
               "question": {
+                "description": "The market being priced.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "The market being priced."
+                ]
               },
               "prices": {
                 "type": "array",
@@ -1512,39 +1579,39 @@
                   "type": "object",
                   "properties": {
                     "side": {
+                      "description": "Which player this price is for, 1 or 2.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Which player this price is for, 1 or 2."
+                      ]
                     },
                     "mid": {
+                      "description": "Mid price, 0-1, readable as implied probability.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Mid price, 0-1, readable as implied probability."
+                      ]
                     },
                     "bid": {
+                      "description": "Best bid.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Best bid."
+                      ]
                     },
                     "ask": {
+                      "description": "Best ask.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Best ask."
+                      ]
                     },
                     "timestamp": {
+                      "description": "When the price was observed.",
                       "type": [
                         "string",
                         "null"
-                      ],
-                      "description": "When the price was observed."
+                      ]
                     }
                   },
                   "required": [
@@ -1563,18 +1630,18 @@
               "question",
               "prices"
             ],
-            "additionalProperties": false,
-            "description": "Match-winner market. Requires the PRO plan, absent otherwise."
+            "additionalProperties": false
           },
           "analysis": {
+            "description": "Model analysis. Requires the ULTRA plan, absent otherwise.",
             "type": "object",
             "properties": {
               "win_probability_p1": {
+                "description": "Model probability player 1 wins, 0-1.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Model probability player 1 wins, 0-1."
+                ]
               },
               "key_factors": {
                 "type": "array",
@@ -1588,35 +1655,35 @@
               "win_probability_p1",
               "key_factors"
             ],
-            "additionalProperties": false,
-            "description": "Model analysis. Requires the ULTRA plan, absent otherwise."
+            "additionalProperties": false
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_match_analysis": {
       "description": "Model analysis for a match: predicted win probability, the model's thesis and the main factors behind it. Requires the ULTRA plan. Match rows carry has_analysis, so check it first. A match with no thesis or profile has nothing to return.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "match_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Match id, as returned by get_live_matches, get_upcoming_matches or get_recent_results."
           }
         },
         "required": [
           "match_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -1628,28 +1695,29 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "profile": {
+            "description": "Quantitative view.",
             "type": "object",
             "properties": {
               "win_probability_p1": {
+                "description": "Model probability player 1 wins, 0-1.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Model probability player 1 wins, 0-1."
+                ]
               },
               "expected_closeness": {
+                "description": "How close the model expects the match to be.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "How close the model expects the match to be."
+                ]
               },
               "volatility_rating": {
+                "description": "Expected swing in the match state.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Expected swing in the match state."
+                ]
               },
               "key_factors": {
                 "type": "array",
@@ -1665,39 +1733,39 @@
               "volatility_rating",
               "key_factors"
             ],
-            "additionalProperties": false,
-            "description": "Quantitative view."
+            "additionalProperties": false
           },
           "thesis": {
+            "description": "Narrative view.",
             "type": "object",
             "properties": {
               "pick_side": {
+                "description": "Player the model favours, 1 or 2.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Player the model favours, 1 or 2."
+                ]
               },
               "confidence": {
+                "description": "Model confidence, 0-1.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Model confidence, 0-1."
+                ]
               },
               "state": {
+                "description": "Current state of the thesis.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Current state of the thesis."
+                ]
               },
               "reasoning": {
+                "description": "Narrative reasoning.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Narrative reasoning."
+                ]
               }
             },
             "required": [
@@ -1706,42 +1774,42 @@
               "state",
               "reasoning"
             ],
-            "additionalProperties": false,
-            "description": "Narrative view."
+            "additionalProperties": false
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_match_events": {
       "description": "Timeline of events for a match: breaks, games won, sets won, momentum runs. Requires the PRO plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "match_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Match id, as returned by get_live_matches, get_upcoming_matches or get_recent_results."
           },
           "limit": {
+            "default": 30,
+            "description": "Maximum events to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 30,
-            "description": "Maximum events to return (1-200)."
+            "maximum": 200
           }
         },
         "required": [
           "match_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -1753,30 +1821,31 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "events": {
+            "description": "Events, newest first, as the API returns them.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "timestamp": {
+                  "description": "When the event occurred.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "When the event occurred."
+                  ]
                 },
                 "type": {
+                  "description": "Event type, e.g. break, game, set.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Event type, e.g. break, game, set."
+                  ]
                 },
                 "player": {
+                  "description": "Player the event belongs to, 1 or 2.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Player the event belongs to, 1 or 2."
+                  ]
                 }
               },
               "required": [
@@ -1785,42 +1854,42 @@
                 "player"
               ],
               "additionalProperties": false
-            },
-            "description": "Events, newest first, as the API returns them."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_match_odds": {
       "description": "Match-winner market prices for a match: implied probability per player, with bid, ask and mid. Requires the PRO plan. Match rows carry has_market, so check it first. A match with no market mapped has no prices to return.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "match_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Match id, as returned by get_live_matches, get_upcoming_matches or get_recent_results."
           },
           "limit": {
+            "default": 10,
+            "description": "Maximum price points to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 10,
-            "description": "Maximum price points to return (1-200)."
+            "maximum": 200
           }
         },
         "required": [
           "match_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -1832,35 +1901,36 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "market": {
+            "description": "The match-winner market.",
             "type": "object",
             "properties": {
               "question": {
+                "description": "The market being priced.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "The market being priced."
+                ]
               },
               "status": {
+                "description": "Market status, e.g. open or resolved.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Market status, e.g. open or resolved."
+                ]
               },
               "volume": {
+                "description": "24h traded volume.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "24h traded volume."
+                ]
               },
               "liquidity": {
+                "description": "Resting liquidity.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Resting liquidity."
+                ]
               },
               "prices": {
                 "type": "array",
@@ -1868,39 +1938,39 @@
                   "type": "object",
                   "properties": {
                     "side": {
+                      "description": "Which player this price is for, 1 or 2.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Which player this price is for, 1 or 2."
+                      ]
                     },
                     "mid": {
+                      "description": "Mid price, 0-1, readable as implied probability.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Mid price, 0-1, readable as implied probability."
+                      ]
                     },
                     "bid": {
+                      "description": "Best bid.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Best bid."
+                      ]
                     },
                     "ask": {
+                      "description": "Best ask.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Best ask."
+                      ]
                     },
                     "timestamp": {
+                      "description": "When the price was observed.",
                       "type": [
                         "string",
                         "null"
-                      ],
-                      "description": "When the price was observed."
+                      ]
                     }
                   },
                   "required": [
@@ -1922,35 +1992,35 @@
               "liquidity",
               "prices"
             ],
-            "additionalProperties": false,
-            "description": "The match-winner market."
+            "additionalProperties": false
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_match_score": {
       "description": "Current score for one match. This is the fastest read, with the lowest latency. Use it when you only need the score and already know the match id. Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "match_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Match id, as returned by get_live_matches, get_upcoming_matches or get_recent_results."
           }
         },
         "required": [
           "match_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -1962,6 +2032,7 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "score": {
+            "description": "The current score.",
             "type": "object",
             "properties": {
               "formatted": {
@@ -1983,25 +2054,25 @@
                 "description": "Sets won per player."
               },
               "serving": {
+                "description": "Which player is serving, 1 or 2.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Which player is serving, 1 or 2."
+                ]
               },
               "is_tiebreak": {
+                "description": "True during a tiebreak.",
                 "type": [
                   "boolean",
                   "null"
-                ],
-                "description": "True during a tiebreak."
+                ]
               },
               "win_probability_p1": {
+                "description": "Model probability player 1 wins, 0-1. ULTRA only.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Model probability player 1 wins, 0-1. ULTRA only."
+                ]
               }
             },
             "required": [
@@ -2011,35 +2082,35 @@
               "is_tiebreak",
               "win_probability_p1"
             ],
-            "additionalProperties": false,
-            "description": "The current score."
+            "additionalProperties": false
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_match_statistics": {
       "description": "In-play (or final) statistics for one match, in TWO families kept separate on purpose. DERIVED is rebuilt from the point-by-point record (holds/breaks, break points, service/return points). MEASURED is counted upstream. It includes what no point record can yield: aces, double faults, the serve split, winners/unforced errors. Measured coverage varies by tour. Absent fields are omitted, never zero-filled. Requires the ULTRA plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "match_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Match id, as returned by get_live_matches, get_upcoming_matches or get_recent_results."
           }
         },
         "required": [
           "match_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -2051,28 +2122,29 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "statistics": {
+            "description": "The statistics.",
             "type": "object",
             "properties": {
               "coverage": {
+                "description": "live | final | stale | none | diverged. Summarises the response.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "live | final | stale | none | diverged. Summarises the response."
+                ]
               },
               "as_of": {
+                "description": "When the underlying record was last updated (UTC).",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "When the underlying record was last updated (UTC)."
+                ]
               },
               "games_counted": {
+                "description": "Games the derived family covers (tiebreaks excluded, counted separately).",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Games the derived family covers (tiebreaks excluded, counted separately)."
+                ]
               },
               "players": {
                 "anyOf": [
@@ -2086,6 +2158,9 @@
                             "properties": {
                               "derived": {
                                 "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
                                 "additionalProperties": {
                                   "type": [
                                     "number",
@@ -2098,6 +2173,9 @@
                                 "anyOf": [
                                   {
                                     "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
                                     "additionalProperties": {
                                       "type": [
                                         "number",
@@ -2126,7 +2204,47 @@
                       "p2": {
                         "anyOf": [
                           {
-                            "$ref": "#/properties/statistics/properties/players/anyOf/0/properties/p1/anyOf/0"
+                            "type": "object",
+                            "properties": {
+                              "derived": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "description": "Rebuilt from the point-by-point record: service/return games and points, hold_pct, break_pct, break points faced/saved/converted. Null percentages mean a zero denominator, never 0."
+                              },
+                              "measured": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {
+                                      "type": [
+                                        "number",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Counted upstream: aces, double_faults, the serve split, winners/unforced errors where covered. Absent fields are omitted, never zero-filled. Quantities named in both families are computed two different ways: a cross-check, not a duplication."
+                              }
+                            },
+                            "required": [
+                              "derived",
+                              "measured"
+                            ],
+                            "additionalProperties": false
                           },
                           {
                             "type": "null"
@@ -2150,6 +2268,9 @@
                 "anyOf": [
                   {
                     "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
                     "additionalProperties": {}
                   },
                   {
@@ -2166,35 +2287,35 @@
               "players",
               "freshness"
             ],
-            "additionalProperties": false,
-            "description": "The statistics."
+            "additionalProperties": false
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_player": {
       "description": "One player's profile: ranking, country, handedness, date of birth and cached stats. Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "player_id": {
             "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
             "description": "Player id, as returned by search_players."
           }
         },
         "required": [
           "player_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -2206,70 +2327,71 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "player": {
+            "description": "The player.",
             "type": "object",
             "properties": {
               "id": {
+                "description": "Player id. Pass to get_player.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Player id. Pass to get_player."
+                ]
               },
               "name": {
+                "description": "Player name.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Player name."
+                ]
               },
               "country": {
+                "description": "Country code.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Country code."
+                ]
               },
               "ranking": {
+                "description": "Current singles ranking.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Current singles ranking."
+                ]
               },
               "ranking_points": {
+                "description": "Ranking points.",
                 "type": [
                   "number",
                   "null"
-                ],
-                "description": "Ranking points."
+                ]
               },
               "ranking_movement": {
+                "description": "Recent movement in the rankings.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Recent movement in the rankings."
+                ]
               },
               "hand": {
+                "description": "\"R\" or \"L\".",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "\"R\" or \"L\"."
+                ]
               },
               "birthday": {
+                "description": "Date of birth, ISO date.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Date of birth, ISO date."
+                ]
               },
               "tour": {
+                "description": "ATP, WTA, Challenger or ITF.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "ATP, WTA, Challenger or ITF."
+                ]
               }
             },
             "required": [
@@ -2283,37 +2405,39 @@
               "birthday",
               "tour"
             ],
-            "additionalProperties": false,
-            "description": "The player."
+            "additionalProperties": false
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_player_rankings": {
       "description": "Point-in-time ranking records for SPECIFIC players. Per system, the newest record in force ON OR BEFORE as_of, never one dated after it. Every other ranking field in this API is the CURRENT value joined at read time. This one is the historical answer. Systems are never collapsed: ATP/WTA and the ITF circuits carry rank+points, UTR a rating. ITF and UTR history begins 2026-07-29. Requires the ULTRA plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "player_ids": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            },
             "minItems": 1,
             "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
             "description": "Roster player ids, as returned by search_players. Max 50."
           },
           "as_of": {
-            "type": "string",
-            "description": "YYYY-MM-DD. The record in force on this date. Omit for the latest known."
+            "description": "YYYY-MM-DD. The record in force on this date. Omit for the latest known.",
+            "type": "string"
           },
           "system": {
+            "description": "Restrict to one system. Omit for every system held for the player.",
             "type": "string",
             "enum": [
               "atp",
@@ -2322,17 +2446,15 @@
               "itf_mt",
               "itf_wt",
               "utr"
-            ],
-            "description": "Restrict to one system. Omit for every system held for the player."
+            ]
           }
         },
         "required": [
           "player_ids"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -2344,72 +2466,73 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "rankings": {
+            "description": "One record per player × system held.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "player_id": {
+                  "description": "Roster player id. Null on listing rows for players outside our roster.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Roster player id. Null on listing rows for players outside our roster."
+                  ]
                 },
                 "player_name": {
+                  "description": "Name as the ranking publisher printed it (listing rows).",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name as the ranking publisher printed it (listing rows)."
+                  ]
                 },
                 "system": {
+                  "description": "atp, wta, itf_jt, itf_mt, itf_wt or utr. Systems are never comparable.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "atp, wta, itf_jt, itf_mt, itf_wt or utr. Systems are never comparable."
+                  ]
                 },
                 "rank": {
+                  "description": "Null for UTR (a rating, not a ranking).",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Null for UTR (a rating, not a ranking)."
+                  ]
                 },
                 "points": {
+                  "description": "Null for UTR.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Null for UTR."
+                  ]
                 },
                 "previous_rank": {
+                  "description": "Rank at the preceding snapshot week (ATP/WTA only, null elsewhere).",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Rank at the preceding snapshot week (ATP/WTA only, null elsewhere)."
+                  ]
                 },
                 "rank_movement": {
+                  "description": "The circuit's own signed weekly movement (ITF systems only).",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "The circuit's own signed weekly movement (ITF systems only)."
+                  ]
                 },
                 "rating": {
+                  "description": "UTR only, null elsewhere.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "UTR only, null elsewhere."
+                  ]
                 },
                 "effective_date": {
+                  "description": "The publication week this record took effect, YYYY-MM-DD.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "The publication week this record took effect, YYYY-MM-DD."
+                  ]
                 }
               },
               "required": [
@@ -2424,33 +2547,35 @@
                 "effective_date"
               ],
               "additionalProperties": false
-            },
-            "description": "One record per player × system held."
+            }
           },
           "coverage": {
+            "description": "What resolved against what was asked (players_resolved, systems_resolved, oldest_available per system). Read before trusting an empty result.",
             "anyOf": [
               {
                 "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
                 "additionalProperties": {}
               },
               {
                 "type": "null"
               }
-            ],
-            "description": "What resolved against what was asked (players_resolved, systems_resolved, oldest_available per system). Read before trusting an empty result."
+            ]
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_rankings": {
       "description": "The FULL published ranking table in rank order for one system, from the newest week at or before as_of. Rows carry player_name as published and a null player_id for players outside our roster, so the table has no silent holes. ATP/WTA history runs deep. The ITF circuits begin 2026-07-29. For point-in-time records of SPECIFIC players use get_player_rankings. Requires the PRO plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "system": {
@@ -2465,24 +2590,23 @@
             "description": "Ranking system to list. utr has no listing, because it is a rating, not a ranking."
           },
           "as_of": {
-            "type": "string",
-            "description": "YYYY-MM-DD. Serves the newest published week at or before this date. Omit for latest."
+            "description": "YYYY-MM-DD. Serves the newest published week at or before this date. Omit for latest.",
+            "type": "string"
           },
           "limit": {
+            "default": 20,
+            "description": "Maximum ranking rows to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 20,
-            "description": "Maximum ranking rows to return (1-200)."
+            "maximum": 200
           }
         },
         "required": [
           "system"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -2494,72 +2618,73 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "rankings": {
+            "description": "The table in rank order.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "player_id": {
+                  "description": "Roster player id. Null on listing rows for players outside our roster.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Roster player id. Null on listing rows for players outside our roster."
+                  ]
                 },
                 "player_name": {
+                  "description": "Name as the ranking publisher printed it (listing rows).",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name as the ranking publisher printed it (listing rows)."
+                  ]
                 },
                 "system": {
+                  "description": "atp, wta, itf_jt, itf_mt, itf_wt or utr. Systems are never comparable.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "atp, wta, itf_jt, itf_mt, itf_wt or utr. Systems are never comparable."
+                  ]
                 },
                 "rank": {
+                  "description": "Null for UTR (a rating, not a ranking).",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Null for UTR (a rating, not a ranking)."
+                  ]
                 },
                 "points": {
+                  "description": "Null for UTR.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Null for UTR."
+                  ]
                 },
                 "previous_rank": {
+                  "description": "Rank at the preceding snapshot week (ATP/WTA only, null elsewhere).",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Rank at the preceding snapshot week (ATP/WTA only, null elsewhere)."
+                  ]
                 },
                 "rank_movement": {
+                  "description": "The circuit's own signed weekly movement (ITF systems only).",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "The circuit's own signed weekly movement (ITF systems only)."
+                  ]
                 },
                 "rating": {
+                  "description": "UTR only, null elsewhere.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "UTR only, null elsewhere."
+                  ]
                 },
                 "effective_date": {
+                  "description": "The publication week this record took effect, YYYY-MM-DD.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "The publication week this record took effect, YYYY-MM-DD."
+                  ]
                 }
               },
               "required": [
@@ -2574,24 +2699,24 @@
                 "effective_date"
               ],
               "additionalProperties": false
-            },
-            "description": "The table in rank order."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_recent_results": {
       "description": "Recently completed tennis matches with final scores and winners. Filterable by tour, player, nationality and play date. Requires the BASIC plan or any History plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "tour": {
+            "description": "Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are excluded whenever the filter is used.",
             "type": "string",
             "enum": [
               "atp",
@@ -2599,43 +2724,43 @@
               "challenger",
               "itf",
               "juniors"
-            ],
-            "description": "Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are excluded whenever the filter is used."
+            ]
           },
           "player": {
+            "description": "Player ids (from search_players), max 50. Keeps matches where ANY listed player is either participant.",
+            "maxItems": 50,
             "type": "array",
             "items": {
-              "type": "integer"
-            },
-            "maxItems": 50,
-            "description": "Player ids (from search_players), max 50. Keeps matches where ANY listed player is either participant."
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
           },
           "country": {
+            "description": "Either participant's country: the lowercase 3-letter IOC-style code the Player object returns (e.g. ned, sui, gre), NOT ISO-3166. Players with no recorded country never match.",
             "type": "string",
             "minLength": 3,
-            "maxLength": 3,
-            "description": "Either participant's country: the lowercase 3-letter IOC-style code the Player object returns (e.g. ned, sui, gre), NOT ISO-3166. Players with no recorded country never match."
+            "maxLength": 3
           },
           "from": {
-            "type": "string",
-            "description": "Earliest play date: YYYY-MM-DD (a whole UTC day) or ISO-8601 datetime."
+            "description": "Earliest play date: YYYY-MM-DD (a whole UTC day) or ISO-8601 datetime.",
+            "type": "string"
           },
           "to": {
-            "type": "string",
-            "description": "Latest play date: YYYY-MM-DD or ISO-8601. Must not precede from."
+            "description": "Latest play date: YYYY-MM-DD or ISO-8601. Must not precede from.",
+            "type": "string"
           },
           "limit": {
+            "default": 20,
+            "description": "Maximum matches to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 20,
-            "description": "Maximum matches to return (1-200)."
+            "maximum": 200
           }
-        },
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -2647,156 +2772,157 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "matches": {
+            "description": "Completed matches, most recent first.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "id": {
+                  "description": "Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds."
+                  ]
                 },
                 "tour": {
+                  "description": "atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events).",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events)."
+                  ]
                 },
                 "tournament": {
+                  "description": "Event name, e.g. \"Wimbledon\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Event name, e.g. \"Wimbledon\"."
+                  ]
                 },
                 "tournament_id": {
+                  "description": "Stable tournament id. Pass to get_tournament. Null where uncatalogued.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Stable tournament id. Pass to get_tournament. Null where uncatalogued."
+                  ]
                 },
                 "round": {
+                  "description": "Round within the event, e.g. \"QF\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round within the event, e.g. \"QF\"."
+                  ]
                 },
                 "round_code": {
+                  "description": "Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed."
+                  ]
                 },
                 "player1": {
+                  "description": "Name of player 1.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name of player 1."
+                  ]
                 },
                 "player2": {
+                  "description": "Name of player 2.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name of player 2."
+                  ]
                 },
                 "score": {
+                  "description": "Formatted score line, e.g. \"6-4 3-6 2-1\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Formatted score line, e.g. \"6-4 3-6 2-1\"."
+                  ]
                 },
                 "status": {
+                  "description": "One of live, upcoming, completed or cancelled.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "One of live, upcoming, completed or cancelled."
+                  ]
                 },
                 "scheduled_time": {
+                  "description": "Scheduled start, UTC ISO-8601. Null when the feed has not published one.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Scheduled start, UTC ISO-8601. Null when the feed has not published one."
+                  ]
                 },
                 "surface": {
+                  "description": "Court surface, e.g. hard, clay, grass.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Court surface, e.g. hard, clay, grass."
+                  ]
                 },
                 "indoor": {
+                  "description": "True when played indoors.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "True when played indoors."
+                  ]
                 },
                 "serving": {
+                  "description": "1 or 2 while a point is in play, otherwise null.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "1 or 2 while a point is in play, otherwise null."
+                  ]
                 },
                 "winner": {
+                  "description": "1 or 2 once decided, otherwise null.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "1 or 2 once decided, otherwise null."
+                  ]
                 },
                 "event_status": {
+                  "description": "How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here."
+                  ]
                 },
                 "event_status_updated_at": {
+                  "description": "The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). Null while the status has never changed since the field was introduced. Never backfilled.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). Null while the status has never changed since the field was introduced. Never backfilled."
+                  ]
                 },
                 "withdrew": {
+                  "description": "Completed matches only: which player retired or conceded the walkover, 1 or 2. Null means \"not a withdrawal, or no evidence\", never a guess.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Completed matches only: which player retired or conceded the walkover, 1 or 2. Null means \"not a withdrawal, or no evidence\", never a guess."
+                  ]
                 },
                 "has_analysis": {
+                  "description": "Whether a model thesis or profile exists for this match (added 2026-09-02, every tier). Filter on this before calling get_match_analysis, which reports the same absence. Null only when the server predates the field.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "Whether a model thesis or profile exists for this match (added 2026-09-02, every tier). Filter on this before calling get_match_analysis, which reports the same absence. Null only when the server predates the field."
+                  ]
                 },
                 "has_market": {
+                  "description": "Whether a match-winner market is mapped to this match (added 2026-09-02, every tier). Filter on this before calling get_match_odds, which reports the same absence. Null only when the server predates the field.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "Whether a match-winner market is mapped to this match (added 2026-09-02, every tier). Filter on this before calling get_match_odds, which reports the same absence. Null only when the server predates the field."
+                  ]
                 },
                 "win_probability_p1": {
+                  "description": "Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise."
+                  ]
                 }
               },
               "required": [
@@ -2823,21 +2949,20 @@
                 "win_probability_p1"
               ],
               "additionalProperties": false
-            },
-            "description": "Completed matches, most recent first."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_tournament": {
       "description": "One tournament by its stable id, the tournament_id carried on match objects. Name, tour, surface, indoor, plus host city/country and category where curated. Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "tournament_id": {
@@ -2847,11 +2972,10 @@
         },
         "required": [
           "tournament_id"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -2863,63 +2987,64 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "tournament": {
+            "description": "The tournament.",
             "type": "object",
             "properties": {
               "id": {
+                "description": "Stable tournament id, the same id match objects carry as tournament_id.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Stable tournament id, the same id match objects carry as tournament_id."
+                ]
               },
               "name": {
+                "description": "Tournament name.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Tournament name."
+                ]
               },
               "tour": {
+                "description": "atp, wta, challenger, itf or juniors.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "atp, wta, challenger, itf or juniors."
+                ]
               },
               "surface": {
+                "description": "Court surface: hard, clay or grass.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Court surface: hard, clay or grass."
+                ]
               },
               "indoor": {
+                "description": "True when played indoors.",
                 "type": [
                   "boolean",
                   "null"
-                ],
-                "description": "True when played indoors."
+                ]
               },
               "city": {
+                "description": "Host city, from a curated table. Null where not curated.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Host city, from a curated table. Null where not curated."
+                ]
               },
               "country": {
+                "description": "Host country, ISO-3166 alpha-2. Null where not curated.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Host country, ISO-3166 alpha-2. Null where not curated."
+                ]
               },
               "category": {
+                "description": "Tournament category (grand_slam, masters_1000, tour_finals, atp_500, atp_250, wta_1000, wta_500, wta_250, wta_125, challenger, itf, juniors). Set only where the catalogues agree unambiguously. Null otherwise, never derived from the name.",
                 "type": [
                   "string",
                   "null"
-                ],
-                "description": "Tournament category (grand_slam, masters_1000, tour_finals, atp_500, atp_250, wta_1000, wta_500, wta_250, wta_125, challenger, itf, juniors). Set only where the catalogues agree unambiguously. Null otherwise, never derived from the name."
+                ]
               }
             },
             "required": [
@@ -2932,24 +3057,24 @@
               "country",
               "category"
             ],
-            "additionalProperties": false,
-            "description": "The tournament."
+            "additionalProperties": false
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "get_upcoming_matches": {
       "description": "List tennis matches scheduled to start soon, with players, tournament and start time. Use this for \"who plays next\" or to find a match id before it starts. Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "tour": {
+            "description": "Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are excluded whenever the filter is used.",
             "type": "string",
             "enum": [
               "atp",
@@ -2957,43 +3082,43 @@
               "challenger",
               "itf",
               "juniors"
-            ],
-            "description": "Tour filter. Each name covers its doubles variants. Exhibition/team events carry no tour and are excluded whenever the filter is used."
+            ]
           },
           "player": {
+            "description": "Player ids (from search_players), max 50. Keeps matches where ANY listed player is either participant.",
+            "maxItems": 50,
             "type": "array",
             "items": {
-              "type": "integer"
-            },
-            "maxItems": 50,
-            "description": "Player ids (from search_players), max 50. Keeps matches where ANY listed player is either participant."
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
           },
           "country": {
+            "description": "Either participant's country: the lowercase 3-letter IOC-style code the Player object returns (e.g. ned, sui, gre), NOT ISO-3166. Players with no recorded country never match.",
             "type": "string",
             "minLength": 3,
-            "maxLength": 3,
-            "description": "Either participant's country: the lowercase 3-letter IOC-style code the Player object returns (e.g. ned, sui, gre), NOT ISO-3166. Players with no recorded country never match."
+            "maxLength": 3
           },
           "from": {
-            "type": "string",
-            "description": "Earliest play date: YYYY-MM-DD (a whole UTC day) or ISO-8601 datetime."
+            "description": "Earliest play date: YYYY-MM-DD (a whole UTC day) or ISO-8601 datetime.",
+            "type": "string"
           },
           "to": {
-            "type": "string",
-            "description": "Latest play date: YYYY-MM-DD or ISO-8601. Must not precede from."
+            "description": "Latest play date: YYYY-MM-DD or ISO-8601. Must not precede from.",
+            "type": "string"
           },
           "limit": {
+            "default": 20,
+            "description": "Maximum matches to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 20,
-            "description": "Maximum matches to return (1-200)."
+            "maximum": 200
           }
-        },
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -3005,156 +3130,157 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "matches": {
+            "description": "Matches due to start, soonest first.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "id": {
+                  "description": "Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Match id. Pass to get_match, get_match_score, get_match_events or get_match_odds."
+                  ]
                 },
                 "tour": {
+                  "description": "atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events).",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "atp, wta, challenger, itf or juniors. Null when the feed never stated one (exhibitions, team events)."
+                  ]
                 },
                 "tournament": {
+                  "description": "Event name, e.g. \"Wimbledon\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Event name, e.g. \"Wimbledon\"."
+                  ]
                 },
                 "tournament_id": {
+                  "description": "Stable tournament id. Pass to get_tournament. Null where uncatalogued.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Stable tournament id. Pass to get_tournament. Null where uncatalogued."
+                  ]
                 },
                 "round": {
+                  "description": "Round within the event, e.g. \"QF\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round within the event, e.g. \"QF\"."
+                  ]
                 },
                 "round_code": {
+                  "description": "Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round in the normalized vocabulary (F, SF, QF, R16 ... Q). Null when the label is unrecognised, never guessed."
+                  ]
                 },
                 "player1": {
+                  "description": "Name of player 1.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name of player 1."
+                  ]
                 },
                 "player2": {
+                  "description": "Name of player 2.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Name of player 2."
+                  ]
                 },
                 "score": {
+                  "description": "Formatted score line, e.g. \"6-4 3-6 2-1\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Formatted score line, e.g. \"6-4 3-6 2-1\"."
+                  ]
                 },
                 "status": {
+                  "description": "One of live, upcoming, completed or cancelled.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "One of live, upcoming, completed or cancelled."
+                  ]
                 },
                 "scheduled_time": {
+                  "description": "Scheduled start, UTC ISO-8601. Null when the feed has not published one.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Scheduled start, UTC ISO-8601. Null when the feed has not published one."
+                  ]
                 },
                 "surface": {
+                  "description": "Court surface, e.g. hard, clay, grass.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Court surface, e.g. hard, clay, grass."
+                  ]
                 },
                 "indoor": {
+                  "description": "True when played indoors.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "True when played indoors."
+                  ]
                 },
                 "serving": {
+                  "description": "1 or 2 while a point is in play, otherwise null.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "1 or 2 while a point is in play, otherwise null."
+                  ]
                 },
                 "winner": {
+                  "description": "1 or 2 once decided, otherwise null.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "1 or 2 once decided, otherwise null."
+                  ]
                 },
                 "event_status": {
+                  "description": "How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "How the match ended (or paused) when it did not run its course: Retired, Cancelled, Walk Over, Postponed or Interrupted. Null means completed normally OR never resolved. Branch settlement logic here."
+                  ]
                 },
                 "event_status_updated_at": {
+                  "description": "The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). Null while the status has never changed since the field was introduced. Never backfilled.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "The instant the current event_status was recorded, UTC ISO-8601 (added 2026-08-19). Null while the status has never changed since the field was introduced. Never backfilled."
+                  ]
                 },
                 "withdrew": {
+                  "description": "Completed matches only: which player retired or conceded the walkover, 1 or 2. Null means \"not a withdrawal, or no evidence\", never a guess.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Completed matches only: which player retired or conceded the walkover, 1 or 2. Null means \"not a withdrawal, or no evidence\", never a guess."
+                  ]
                 },
                 "has_analysis": {
+                  "description": "Whether a model thesis or profile exists for this match (added 2026-09-02, every tier). Filter on this before calling get_match_analysis, which reports the same absence. Null only when the server predates the field.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "Whether a model thesis or profile exists for this match (added 2026-09-02, every tier). Filter on this before calling get_match_analysis, which reports the same absence. Null only when the server predates the field."
+                  ]
                 },
                 "has_market": {
+                  "description": "Whether a match-winner market is mapped to this match (added 2026-09-02, every tier). Filter on this before calling get_match_odds, which reports the same absence. Null only when the server predates the field.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "Whether a match-winner market is mapped to this match (added 2026-09-02, every tier). Filter on this before calling get_match_odds, which reports the same absence. Null only when the server predates the field."
+                  ]
                 },
                 "win_probability_p1": {
+                  "description": "Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Model probability that player 1 wins, 0-1. Requires the ULTRA plan, null otherwise."
+                  ]
                 }
               },
               "required": [
@@ -3181,45 +3307,612 @@
                 "win_probability_p1"
               ],
               "additionalProperties": false
-            },
-            "description": "Matches due to start, soonest first."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
+      }
+    },
+    "player_stats": {
+      "description": "One player's record over our own completed singles matches (2023 onward), by default the last 365 days. It gives W/L overall, over the last 12 months and by surface, venue, level and season. It also gives tiebreaks, deciding sets, the record after winning or losing the first set, comebacks, withdrawals and the last N matches. Every count carries its sample size, and a percentage on an empty sample is null, never 0. On ULTRA it adds serve_return: measured serve and return statistics summed over the window. Singles only, so a doubles-team id is refused. For 1968 to 2022 use get_archive_career. Requires the PRO plan (serve_return requires ULTRA).",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "player_id": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Player id, as returned by search_players."
+          },
+          "from": {
+            "description": "Window start: YYYY-MM-DD (start of that day) or a UTC ISO-8601 instant. Default to minus 365 days.",
+            "type": "string"
+          },
+          "to": {
+            "description": "Window end: YYYY-MM-DD (the whole of that day) or a UTC ISO-8601 instant. Default now.",
+            "type": "string"
+          },
+          "surface": {
+            "description": "hard, clay or grass read the match surface; indoor keeps matches stated indoor, on any surface.",
+            "type": "string",
+            "enum": [
+              "hard",
+              "clay",
+              "grass",
+              "indoor"
+            ]
+          },
+          "level": {
+            "description": "The match tour. A match with no stated tour matches no level.",
+            "type": "string",
+            "enum": [
+              "atp",
+              "wta",
+              "challenger",
+              "itf",
+              "juniors"
+            ]
+          },
+          "last": {
+            "description": "How many recent matches to list, newest first (1-50, default 20).",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "player_id"
+        ]
+      },
+      "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when the request succeeded, including when the answer is an empty list. False for a missing or rejected key, a plan that does not include this data, an unknown id, a rate limit or a network error. The message then says what to do. check_api_status is the exception: it is true whenever the API answered, and reports API key problems in the message."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable summary of the result, safe to relay to the user verbatim."
+          },
+          "player": {
+            "description": "The player.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "window": {
+            "description": "The window applied, UTC.",
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "to": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          },
+          "overall": {
+            "description": "W/L over the window.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "matches": {
+                    "description": "Matches in the sample.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "wins": {
+                    "description": "Wins.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "losses": {
+                    "description": "Losses.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "win_pct": {
+                    "description": "Win percentage, one decimal; null (never 0) on an empty sample.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "matches",
+                  "wins",
+                  "losses",
+                  "win_pct"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_12_months": {
+            "description": "W/L over the 12 months ending at the window end.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "matches": {
+                    "description": "Matches in the sample.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "wins": {
+                    "description": "Wins.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "losses": {
+                    "description": "Losses.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "win_pct": {
+                    "description": "Win percentage, one decimal; null (never 0) on an empty sample.",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "matches",
+                  "wins",
+                  "losses",
+                  "win_pct"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "by_surface": {
+            "description": "W/L keyed hard, clay, grass, unknown.",
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "matches": {
+                      "description": "Matches in the sample.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "wins": {
+                      "description": "Wins.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "losses": {
+                      "description": "Losses.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "win_pct": {
+                      "description": "Win percentage, one decimal; null (never 0) on an empty sample.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "matches",
+                    "wins",
+                    "losses",
+                    "win_pct"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "by_venue": {
+            "description": "W/L keyed indoor, outdoor, unknown.",
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "matches": {
+                      "description": "Matches in the sample.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "wins": {
+                      "description": "Wins.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "losses": {
+                      "description": "Losses.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "win_pct": {
+                      "description": "Win percentage, one decimal; null (never 0) on an empty sample.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "matches",
+                    "wins",
+                    "losses",
+                    "win_pct"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "by_level": {
+            "description": "W/L keyed by match tour, or unknown.",
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "matches": {
+                      "description": "Matches in the sample.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "wins": {
+                      "description": "Wins.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "losses": {
+                      "description": "Losses.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "win_pct": {
+                      "description": "Win percentage, one decimal; null (never 0) on an empty sample.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "matches",
+                    "wins",
+                    "losses",
+                    "win_pct"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "by_season": {
+            "description": "W/L keyed by UTC calendar year.",
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "matches": {
+                      "description": "Matches in the sample.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "wins": {
+                      "description": "Wins.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "losses": {
+                      "description": "Losses.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "win_pct": {
+                      "description": "Win percentage, one decimal; null (never 0) on an empty sample.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "matches",
+                    "wins",
+                    "losses",
+                    "win_pct"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sets": {
+            "description": "Set-based record: sample, tiebreaks, deciding_sets, after_winning_first_set, after_losing_first_set, comebacks, sets.",
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "withdrawals": {
+            "description": "Retired / walkover / default, each as given (this player) and received (the opponent).",
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recent": {
+            "description": "The last N matches, newest first.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "match_id": {
+                  "description": "Match id. Pass to get_match.",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "date": {
+                  "description": "Match date.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tournament": {
+                  "description": "Event name.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "round": {
+                  "description": "Round.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "surface": {
+                  "description": "Court surface.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "opponent": {
+                  "description": "Opponent name.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "opponent_id": {
+                  "description": "Opponent player id.",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "won": {
+                  "description": "True when this player won.",
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "outcome": {
+                  "description": "completed, retired, walkover or default.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "score": {
+                  "description": "Final score from this player's side, e.g. \"6-4 3-6 6-2\".",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "match_id",
+                "date",
+                "tournament",
+                "round",
+                "surface",
+                "opponent",
+                "opponent_id",
+                "won",
+                "outcome",
+                "score"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "serve_return": {
+            "description": "ULTRA only, null below: summed serve and return statistics, each ratio as numerator/denominator/pct with its match count.",
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "message"
+        ],
+        "additionalProperties": false
       }
     },
     "search_archive_matches": {
       "description": "Search the results archive: completed-match RESULTS from 1968 through 2022. ATP and WTA, main draws, qualifying and the ITF/futures tiers. Each record has winner and loser, final score, and seeds and ranks AT THE TIME of the match. Use this for historical questions (\"Borg's Wimbledon finals\"). The archive ends 2022-12-31, where our own results (get_recent_results) begin. Requires the BASIC plan or any History plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "player_name": {
+            "description": "Case-insensitive fragment of EITHER player's name, min 3 chars, e.g. \"borg\".",
             "type": "string",
-            "minLength": 3,
-            "description": "Case-insensitive fragment of EITHER player's name, min 3 chars, e.g. \"borg\"."
+            "minLength": 3
           },
           "tour": {
+            "description": "atp or wta.",
             "type": "string",
             "enum": [
               "atp",
               "wta"
-            ],
-            "description": "atp or wta."
+            ]
           },
           "from": {
-            "type": "string",
-            "description": "Earliest tournament START date, YYYY-MM-DD."
+            "description": "Earliest tournament START date, YYYY-MM-DD.",
+            "type": "string"
           },
           "to": {
-            "type": "string",
-            "description": "Latest tournament START date, YYYY-MM-DD."
+            "description": "Latest tournament START date, YYYY-MM-DD.",
+            "type": "string"
           },
           "round": {
+            "description": "Round code, e.g. F for finals.",
             "type": "string",
             "enum": [
               "F",
@@ -3236,25 +3929,23 @@
               "Q3",
               "Q4",
               "ER"
-            ],
-            "description": "Round code, e.g. F for finals."
+            ]
           },
           "level": {
-            "type": "string",
-            "description": "Source tier code: G=grand slam, M=masters, A=tour, F=finals, D=davis cup, C=challenger, O=olympics. Or a futures category code (e.g. 15)."
+            "description": "Source tier code: G=grand slam, M=masters, A=tour, F=finals, D=davis cup, C=challenger, O=olympics. Or a futures category code (e.g. 15).",
+            "type": "string"
           },
           "limit": {
+            "default": 20,
+            "description": "Maximum results to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 20,
-            "description": "Maximum results to return (1-200)."
+            "maximum": 200
           }
-        },
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -3266,138 +3957,139 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "results": {
+            "description": "Archive results, newest tournament first.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "id": {
+                  "description": "Archive match id. Pass to get_archive_match for the detail read with stats.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Archive match id. Pass to get_archive_match for the detail read with stats."
+                  ]
                 },
                 "tour": {
+                  "description": "atp or wta. The results archive covers those two tours.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "atp or wta. The results archive covers those two tours."
+                  ]
                 },
                 "tournament": {
+                  "description": "Tournament name.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Tournament name."
+                  ]
                 },
                 "event_date": {
+                  "description": "The tournament START date. Per-match dates do not exist in this era's records.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "The tournament START date. Per-match dates do not exist in this era's records."
+                  ]
                 },
                 "round": {
+                  "description": "Round code: F, SF, QF, R16 … Q1-Q4.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Round code: F, SF, QF, R16 … Q1-Q4."
+                  ]
                 },
                 "level": {
+                  "description": "Source tier code: G, M, A, F, D, C, O, or a futures category code.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Source tier code: G, M, A, F, D, C, O, or a futures category code."
+                  ]
                 },
                 "surface": {
+                  "description": "Court surface.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Court surface."
+                  ]
                 },
                 "score": {
+                  "description": "The final score as published, e.g. \"6-4 7-6(5)\", \"6-3 RET\", \"W/O\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "The final score as published, e.g. \"6-4 7-6(5)\", \"6-3 RET\", \"W/O\"."
+                  ]
                 },
                 "outcome": {
+                  "description": "completed, retired, walkover, default or abandoned. Parsed, null when unparseable.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "completed, retired, walkover, default or abandoned. Parsed, null when unparseable."
+                  ]
                 },
                 "winner": {
                   "type": "object",
                   "properties": {
                     "name": {
+                      "description": "Player name as the corpus records it.",
                       "type": [
                         "string",
                         "null"
-                      ],
-                      "description": "Player name as the corpus records it."
+                      ]
                     },
                     "country": {
+                      "description": "3-letter country code.",
                       "type": [
                         "string",
                         "null"
-                      ],
-                      "description": "3-letter country code."
+                      ]
                     },
                     "rank": {
+                      "description": "Rank AT THE TIME of the match, as published.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Rank AT THE TIME of the match, as published."
+                      ]
                     },
                     "seed": {
+                      "description": "Seeding, where seeded.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Seeding, where seeded."
+                      ]
                     },
                     "player_id": {
+                      "description": "Corpus person id. Join it to search_archive_players results for bios. NOT a roster player id.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Corpus person id. Join it to search_archive_players results for bios. NOT a roster player id."
+                      ]
                     },
                     "hand": {
+                      "description": "\"R\" or \"L\".",
                       "type": [
                         "string",
                         "null"
-                      ],
-                      "description": "\"R\" or \"L\"."
+                      ]
                     },
                     "height_cm": {
+                      "description": "Height in cm, where recorded.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Height in cm, where recorded."
+                      ]
                     },
                     "age": {
+                      "description": "Age at the time of the match.",
                       "type": [
                         "number",
                         "null"
-                      ],
-                      "description": "Age at the time of the match."
+                      ]
                     },
                     "entry": {
+                      "description": "Draw entry where recorded (WC, Q, LL, ...). Null for direct acceptances.",
                       "type": [
                         "string",
                         "null"
-                      ],
-                      "description": "Draw entry where recorded (WC, Q, LL, ...). Null for direct acceptances."
+                      ]
                     }
                   },
                   "required": [
@@ -3418,31 +4110,67 @@
                   "type": "object",
                   "properties": {
                     "name": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/name"
+                      "description": "Player name as the corpus records it.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "country": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/country"
+                      "description": "3-letter country code.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "rank": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/rank"
+                      "description": "Rank AT THE TIME of the match, as published.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "seed": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/seed"
+                      "description": "Seeding, where seeded.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "player_id": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/player_id"
+                      "description": "Corpus person id. Join it to search_archive_players results for bios. NOT a roster player id.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "hand": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/hand"
+                      "description": "\"R\" or \"L\".",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "height_cm": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/height_cm"
+                      "description": "Height in cm, where recorded.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "age": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/age"
+                      "description": "Age at the time of the match.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "entry": {
-                      "$ref": "#/properties/results/items/properties/winner/properties/entry"
+                      "description": "Draw entry where recorded (WC, Q, LL, ...). Null for direct acceptances.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
@@ -3474,21 +4202,20 @@
                 "loser"
               ],
               "additionalProperties": false
-            },
-            "description": "Archive results, newest tournament first."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "search_archive_players": {
       "description": "The people of the results archive (1968 to 2022): hand, date of birth, country, height, and career-high rank with the week it was first reached. Their ids are corpus person ids (the winner/loser player_id on archive results), not roster ids. For current players use search_players. Requires the BASIC plan or any History plan.",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "query": {
@@ -3497,28 +4224,27 @@
             "description": "Full or partial player name, min 3 chars, e.g. \"navratilova\"."
           },
           "tour": {
+            "description": "atp or wta.",
             "type": "string",
             "enum": [
               "atp",
               "wta"
-            ],
-            "description": "atp or wta."
+            ]
           },
           "limit": {
+            "default": 10,
+            "description": "Maximum players to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 10,
-            "description": "Maximum players to return (1-200)."
+            "maximum": 200
           }
         },
         "required": [
           "query"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -3530,72 +4256,73 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "players": {
+            "description": "Matching archive people, ordered by name.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "id": {
+                  "description": "Corpus person id, the id archive match rows carry as winner/loser player_id. NOT a roster id.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Corpus person id, the id archive match rows carry as winner/loser player_id. NOT a roster id."
+                  ]
                 },
                 "tour": {
+                  "description": "atp or wta.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "atp or wta."
+                  ]
                 },
                 "name": {
+                  "description": "Player name.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Player name."
+                  ]
                 },
                 "hand": {
+                  "description": "\"R\" or \"L\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "\"R\" or \"L\"."
+                  ]
                 },
                 "dob": {
+                  "description": "Date of birth, ISO date.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Date of birth, ISO date."
+                  ]
                 },
                 "country": {
+                  "description": "3-letter country code.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "3-letter country code."
+                  ]
                 },
                 "height_cm": {
+                  "description": "Height in cm.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Height in cm."
+                  ]
                 },
                 "career_high_rank": {
+                  "description": "Career-high rank, from the corpus's own weekly tables.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Career-high rank, from the corpus's own weekly tables."
+                  ]
                 },
                 "career_high_date": {
+                  "description": "The earliest week the career-high rank was reached.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "The earliest week the career-high rank was reached."
+                  ]
                 }
               },
               "required": [
@@ -3610,21 +4337,20 @@
                 "career_high_date"
               ],
               "additionalProperties": false
-            },
-            "description": "Matching archive people, ordered by name."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "search_players": {
       "description": "Search tennis players by name. Returns id, country, ranking and tour. Use the returned id with get_player. Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "query": {
@@ -3633,20 +4359,19 @@
             "description": "Full or partial player name, e.g. \"alcaraz\"."
           },
           "limit": {
+            "default": 10,
+            "description": "Maximum players to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 10,
-            "description": "Maximum players to return (1-200)."
+            "maximum": 200
           }
         },
         "required": [
           "query"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        ]
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -3658,72 +4383,73 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "players": {
+            "description": "Matching players, best match first.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "id": {
+                  "description": "Player id. Pass to get_player.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Player id. Pass to get_player."
+                  ]
                 },
                 "name": {
+                  "description": "Player name.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Player name."
+                  ]
                 },
                 "country": {
+                  "description": "Country code.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Country code."
+                  ]
                 },
                 "ranking": {
+                  "description": "Current singles ranking.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Current singles ranking."
+                  ]
                 },
                 "ranking_points": {
+                  "description": "Ranking points.",
                   "type": [
                     "number",
                     "null"
-                  ],
-                  "description": "Ranking points."
+                  ]
                 },
                 "ranking_movement": {
+                  "description": "Recent movement in the rankings.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Recent movement in the rankings."
+                  ]
                 },
                 "hand": {
+                  "description": "\"R\" or \"L\".",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "\"R\" or \"L\"."
+                  ]
                 },
                 "birthday": {
+                  "description": "Date of birth, ISO date.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Date of birth, ISO date."
+                  ]
                 },
                 "tour": {
+                  "description": "ATP, WTA, Challenger or ITF.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "ATP, WTA, Challenger or ITF."
+                  ]
                 }
               },
               "required": [
@@ -3738,28 +4464,28 @@
                 "tour"
               ],
               "additionalProperties": false
-            },
-            "description": "Matching players, best match first."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     },
     "search_tournaments": {
       "description": "Search the tournament catalogue. Its ids are the tournament_id that match objects carry. Returns surface, indoor, host city/country and category where curated. Works on the FREE plan (no card needed).",
       "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "query": {
-            "type": "string",
-            "description": "Full or partial tournament name, e.g. \"wimbledon\". Omit to list all."
+            "description": "Full or partial tournament name, e.g. \"wimbledon\". Omit to list all.",
+            "type": "string"
           },
           "tour": {
+            "description": "Restrict to one tour.",
             "type": "string",
             "enum": [
               "atp",
@@ -3767,21 +4493,19 @@
               "challenger",
               "itf",
               "juniors"
-            ],
-            "description": "Restrict to one tour."
+            ]
           },
           "limit": {
+            "default": 20,
+            "description": "Maximum tournaments to return (1-200).",
             "type": "integer",
             "minimum": 1,
-            "maximum": 200,
-            "default": 20,
-            "description": "Maximum tournaments to return (1-200)."
+            "maximum": 200
           }
-        },
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       "outputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
           "ok": {
@@ -3793,65 +4517,66 @@
             "description": "Human-readable summary of the result, safe to relay to the user verbatim."
           },
           "tournaments": {
+            "description": "Matching tournaments, name order.",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "id": {
+                  "description": "Stable tournament id, the same id match objects carry as tournament_id.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Stable tournament id, the same id match objects carry as tournament_id."
+                  ]
                 },
                 "name": {
+                  "description": "Tournament name.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Tournament name."
+                  ]
                 },
                 "tour": {
+                  "description": "atp, wta, challenger, itf or juniors.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "atp, wta, challenger, itf or juniors."
+                  ]
                 },
                 "surface": {
+                  "description": "Court surface: hard, clay or grass.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Court surface: hard, clay or grass."
+                  ]
                 },
                 "indoor": {
+                  "description": "True when played indoors.",
                   "type": [
                     "boolean",
                     "null"
-                  ],
-                  "description": "True when played indoors."
+                  ]
                 },
                 "city": {
+                  "description": "Host city, from a curated table. Null where not curated.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Host city, from a curated table. Null where not curated."
+                  ]
                 },
                 "country": {
+                  "description": "Host country, ISO-3166 alpha-2. Null where not curated.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Host country, ISO-3166 alpha-2. Null where not curated."
+                  ]
                 },
                 "category": {
+                  "description": "Tournament category (grand_slam, masters_1000, tour_finals, atp_500, atp_250, wta_1000, wta_500, wta_250, wta_125, challenger, itf, juniors). Set only where the catalogues agree unambiguously. Null otherwise, never derived from the name.",
                   "type": [
                     "string",
                     "null"
-                  ],
-                  "description": "Tournament category (grand_slam, masters_1000, tour_finals, atp_500, atp_250, wta_1000, wta_500, wta_250, wta_125, challenger, itf, juniors). Set only where the catalogues agree unambiguously. Null otherwise, never derived from the name."
+                  ]
                 }
               },
               "required": [
@@ -3865,16 +4590,14 @@
                 "category"
               ],
               "additionalProperties": false
-            },
-            "description": "Matching tournaments, name order."
+            }
           }
         },
         "required": [
           "ok",
           "message"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
+        "additionalProperties": false
       }
     }
   }

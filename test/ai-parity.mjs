@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The 24 tools this server shares with livetennisapi-ai must be defined the
+ * The 25 tools this server shares with livetennisapi-ai must be defined the
  * same way in both packages: the same description, the same input schema and
  * the same output schema, field descriptions included.
  *
@@ -15,8 +15,9 @@
  * conversion the SDK applies here). Any difference, down to one character of a
  * field description, fails the test and is printed with its path.
  *
- * player_stats is this server's own and has no AI counterpart yet; it is listed
- * in EXTRA so a new tool on either side is a deliberate change, not a silent one.
+ * EXTRA lists tools this server has that the AI package does not, so a new tool
+ * on either side is a deliberate change, not a silent one. It is empty since
+ * livetennisapi-ai 1.3.0 added player_stats, the last tool that was ours alone.
  *
  * REWORDED lists the phrases this server words differently from the snapshot
  * until livetennisapi-ai ships the same wording. Each pair is applied to the
@@ -39,7 +40,7 @@ if (!file) { console.error('FAIL: no livetennisapi-ai snapshot under test/fixtur
 const snapshot = JSON.parse(readFileSync(join(fixtures, file), 'utf8'));
 
 /** Tools this server has that the AI package does not. */
-const EXTRA = ['player_stats'];
+const EXTRA = [];
 
 /** [snapshot phrase, this server's phrase]: see REWORDED in the header. */
 const REWORDED = [
@@ -59,6 +60,8 @@ const REWORDED = [
   ["where our own results (get_recent_results) begin", "where the current results (get_recent_results) begin"],
   ["Name as the ranking publisher printed it (listing rows).", "Player name as it appears in the ranking (listing rows)."],
   ["The circuit's own signed weekly movement (ITF systems only).", "Signed weekly rank movement (ITF systems only)."],
+  ['our own completed singles matches (2023 onward)', 'completed singles matches from 2023 onward'],
+  ['e.g. "6-4 3-6 6-2".', 'e.g. "6-4 3-6 6-2". A game count the API does not hold shows as ?.'],
 ];
 const reworded = new Map(REWORDED.map(([from]) => [from, 0]));
 const VALUE_KEYS = new Set(['default', 'const', 'enum', 'examples']);

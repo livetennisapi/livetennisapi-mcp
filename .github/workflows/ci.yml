@@ -53,7 +53,7 @@ jobs:
       - name: Speaks the MCP protocol
         run: node test/protocol.mjs
 
-      # The 24 tools shared with livetennisapi-ai are defined word for word the
+      # The 25 tools shared with livetennisapi-ai are defined word for word the
       # same in both packages, schemas and field descriptions included, against
       # a vendored snapshot of the pinned AI release. A model that learned one
       # wording misreads the other when they drift.

@@ -3,7 +3,7 @@
  * Snapshot the tool definitions of a livetennisapi-ai release, so that
  * test/ai-parity.mjs can hold this server to them word for word.
  *
- * The two packages describe the same 24 tools to a model. When they drift, a
+ * The two packages describe the same 25 tools to a model. When they drift, a
  * model that learned one of them misreads the other. This writes the
  * description, input schema and output schema of every tool in the AI package
  * to test/fixtures/livetennisapi-ai-<version>.tools.json, converted to JSON
@@ -11,7 +11,7 @@
  * tools/list handler uses, so the two sides are comparable byte for byte.
  *
  * Usage:
- *   mkdir -p /tmp/ai && cd /tmp/ai && npm pack livetennisapi-ai@1.2.1 && tar xzf *.tgz
+ *   mkdir -p /tmp/ai && cd /tmp/ai && npm pack livetennisapi-ai@1.3.1 && tar xzf *.tgz
  *   node scripts/ai-parity-snapshot.mjs /tmp/ai/package
  *
  * The tarball's code is imported for its exported definitions only: `ai` is
