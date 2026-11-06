@@ -63,7 +63,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.6.2",
+    "express-rate-limit": "^8.7.1",
     "livetennisapi": "^1.10.1",
     "zod": "^4.6.7"
   },
