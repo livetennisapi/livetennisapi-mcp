@@ -6,6 +6,9 @@ updates:
       interval: weekly
     commit-message:
       prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]
 
   - package-ecosystem: npm
     directory: "/"
@@ -13,3 +16,6 @@ updates:
       interval: weekly
     commit-message:
       prefix: "deps"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
