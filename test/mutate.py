@@ -110,15 +110,26 @@ def sh(cmd, timeout=90):
     return subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
 
 
+# tsup is called directly: `npm run build` adds npm's own start-up to every one of the
+# 19 builds this script makes, and the build itself is the same command either way.
+BUILD = 'node_modules/.bin/tsup' if pathlib.Path('node_modules/.bin/tsup').exists() else 'npm run build'
+
+
+def build():
+    return sh(BUILD, timeout=180).returncode == 0
+
+
 def clear_ports():
     out = sh("ss -lntp 2>/dev/null | grep -oP ':812[0-9].*pid=\\K[0-9]+' | sort -u").stdout.split()
     for pid in out:
         sh(f"kill -9 {pid}")
 
 
-def run_suite(test):
+def run_suite(test, rebuild=True):
+    """Run one test file. A rebuild is needed after the source changed, so every mutant
+    rebuilds; the baseline and the reverify pass run three tests on ONE clean build."""
     clear_ports()
-    if sh("npm run build", timeout=180).returncode != 0:
+    if rebuild and not build():
         return None, 'BUILD FAILED'
     try:
         r = sh(f"node {test}", timeout=90)
@@ -139,8 +150,10 @@ def main():
     for src in SOURCES:
         shutil.copy(src, BACKUP_DIR / src.name)
     print('=== baseline: both suites must pass on the clean build ===')
+    if not build():
+        print('baseline build failed — aborting'); return 1
     for t in ('test/http-isolation.mjs', 'test/http-ratelimit.mjs', 'test/tools-output.mjs'):
-        code, last = run_suite(t)
+        code, last = run_suite(t, rebuild=False)
         print(f'  {"PASS" if code == 0 else "FAIL"}  {t}: {last}')
         if code != 0:
             print('baseline is not green — aborting'); restore_all(); return 1
@@ -164,11 +177,10 @@ def main():
             print(f'  KILLED    {label}')
 
     restore_all()
-    sh("npm run build", timeout=180)
+    ok = build()
     print('\n=== restored; reverifying clean build ===')
-    ok = True
     for t in ('test/http-isolation.mjs', 'test/http-ratelimit.mjs', 'test/tools-output.mjs'):
-        code, last = run_suite(t)
+        code, last = run_suite(t, rebuild=False)
         print(f'  {"PASS" if code == 0 else "FAIL"}  {t}: {last}')
         ok &= code == 0
 
