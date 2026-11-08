@@ -1,7 +1,9 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/http.ts'],
+  // auth.ts is an entry of its own so test/auth.mjs can import the parser
+  // directly; http.js still inlines or chunk-imports it as tsup sees fit.
+  entry: ['src/index.ts', 'src/http.ts', 'src/auth.ts'],
   format: ['esm'],
   target: 'es2022',
   clean: true,

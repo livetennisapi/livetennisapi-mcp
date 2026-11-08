@@ -12,7 +12,7 @@ import subprocess
 import sys
 import pathlib
 
-SOURCES = [pathlib.Path('src/http.ts'), pathlib.Path('src/server.ts')]
+SOURCES = [pathlib.Path('src/http.ts'), pathlib.Path('src/server.ts'), pathlib.Path('src/auth.ts')]
 BACKUP_DIR = pathlib.Path('.mutation-pristine')   # scratch copies, git-ignored
 
 # (label, file, find, replace, which test must catch it)
@@ -103,6 +103,14 @@ MUTATIONS = [
      "        structuredContent: { ok: true, message: body, ...(data ?? {}) },",
      "        structuredContent: { ok: true, message: 'ok', ...(data ?? {}) },",
      'test/tools-output.mjs'),
+
+    ("M14 bearer parser reverted to the quadratic regex",
+     'src/auth.ts',
+     "export function bearerToken(auth: string): string | null {\n",
+     "export function bearerToken(auth: string): string | null {\n"
+     "  const m = /^Bearer\\s+(.+)$/i.exec(auth);\n"
+     "  return m ? m[1].trim() : null;\n",
+     'test/auth.mjs'),
 ]
 
 
@@ -139,7 +147,7 @@ def main():
     for src in SOURCES:
         shutil.copy(src, BACKUP_DIR / src.name)
     print('=== baseline: both suites must pass on the clean build ===')
-    for t in ('test/http-isolation.mjs', 'test/http-ratelimit.mjs', 'test/tools-output.mjs'):
+    for t in ('test/auth.mjs', 'test/http-isolation.mjs', 'test/http-ratelimit.mjs', 'test/tools-output.mjs'):
         code, last = run_suite(t)
         print(f'  {"PASS" if code == 0 else "FAIL"}  {t}: {last}')
         if code != 0:
@@ -167,7 +175,7 @@ def main():
     sh("npm run build", timeout=180)
     print('\n=== restored; reverifying clean build ===')
     ok = True
-    for t in ('test/http-isolation.mjs', 'test/http-ratelimit.mjs', 'test/tools-output.mjs'):
+    for t in ('test/auth.mjs', 'test/http-isolation.mjs', 'test/http-ratelimit.mjs', 'test/tools-output.mjs'):
         code, last = run_suite(t)
         print(f'  {"PASS" if code == 0 else "FAIL"}  {t}: {last}')
         ok &= code == 0

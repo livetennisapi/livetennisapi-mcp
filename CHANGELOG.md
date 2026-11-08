@@ -5,6 +5,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- The HTTP transport parses `Authorization: Bearer …` with a single forward
+  scan instead of the regex `/^Bearer\s+(.+)$/i`, which ran in quadratic time
+  on a header made of many spaces (CodeQL js/polynomial-redos). The parsed
+  key is identical for every input. `test/auth.mjs` checks parity with the old
+  regex and a 100k-space header under a time budget.
+
 ## [1.6.5] - 2026-10-28
 
 ### Changed
