@@ -50,6 +50,11 @@ jobs:
           echo "package.json=$pkg  source=$src"
           [ "$pkg" = "$src" ]
 
+      # The Authorization header is caller-controlled. Its parser must stay
+      # linear and keep returning exactly what the old regex returned.
+      - name: Bearer header parsing is linear
+        run: node test/auth.mjs
+
       - name: Speaks the MCP protocol
         run: node test/protocol.mjs
 

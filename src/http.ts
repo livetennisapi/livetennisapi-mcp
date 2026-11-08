@@ -34,6 +34,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import express, { type Request, type Response } from 'express';
 import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
 
+import { bearerToken } from './auth.js';
 import { VERSION, createServer } from './server.js';
 
 const PORT = Number(process.env.PORT ?? 8081);
@@ -62,9 +63,8 @@ const KEYED_LIMIT = envInt('MCP_RATE_LIMIT_KEYED', 300);
  * Never falls back to the process environment — see the file header.
  */
 function callerKey(req: Request): string {
-  const auth = req.get('authorization') ?? '';
-  const bearer = /^Bearer\s+(.+)$/i.exec(auth);
-  if (bearer) return bearer[1].trim();
+  const bearer = bearerToken(req.get('authorization') ?? '');
+  if (bearer !== null) return bearer;
 
   const header = req.get('x-api-key');
   if (header) return header.trim();
